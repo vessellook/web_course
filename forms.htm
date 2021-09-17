@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Таблицы</title>
+    <link rel="stylesheet" href="forms.css">
+</head>
+<body>
+    <form action="#" method="post">
+        <p>Имя клиента</p>
+        <input type="text" name="first-name" id="first-name">
+        <p>Фамилия клиента</p>
+        <input type="text" name="last-name" id="last-name">
+        <p>Способ оплаты</p>
+        <select name="payment-method" id="payment-mephod">
+            <option value="cash">Наличный</option>
+            <option value="card">Безналичный</option>
+        </select>
+        <p>Адрес клиента</p>
+        <input type="text" name="address" id="address">
+        <p>Код кредитной карточки клиента</p>
+        <input type="number" name="card-code" id="card-code">
+        <p>Опции доставки</p>
+        <select name="delivery" id="delivery">
+            <option value="pickup">Самовызов</option>
+            <option value="courier">Курьерская доставка</option>
+        </select>
+        <p>Дополнительные сведения о заказе</p>
+        <textarea name="comment" id="comment" cols="30" rows="10"></textarea>
+        <p>Заказанный товар</p>
+        <select name="product" id="product">
+            <option value="first">Первый</option>
+            <option value="second">Второй</option>
+            <option value="third">Третий</option>
+        </select>
+        <input type="button" value="Отправить">
+    </form>
+</body>
+</html>
