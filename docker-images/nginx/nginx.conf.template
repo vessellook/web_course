@@ -1,0 +1,31 @@
+server {
+  server_name ${SERVER_NAME};
+  server_tokens off;
+  root /var/www/public;
+
+    location = /healthcheck {
+      return 200;
+      access_log off;
+    }
+
+    location /static {
+      try_files $uri =404;
+    }
+
+    location ~^/(api|info|setup) {
+      fastcgi_split_path_info ^(.+\.php)(/.+)$;
+      fastcgi_pass php:9000;
+      fastcgi_index index.php;
+      include fastcgi_params;
+      fastcgi_param SCRIPT_FILENAME $document_root/index.php;
+      fastcgi_param PATH_INFO $fastcgi_path_info;
+    }
+
+    location / {
+      try_files $uri $uri/ /index.html;
+    }
+
+    location =/ {
+      try_files $uri $uri/ /index.html;
+    }
+}
