@@ -137,3 +137,4 @@ yarn-error.log
 # End of https://www.toptal.com/developers/gitignore/api/dotenv,composer,phpstorm+all,vuejs,sass,phpunit
 
 ignore
+public/static/js

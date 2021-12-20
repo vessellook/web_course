@@ -1,0 +1,43 @@
+{
+  "name": "progress",
+  "version": "1.0.0",
+  "description": "Project for MEPhI course",
+  "main": "src/vue/index.js",
+  "private": true,
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vessellook/web_course.git"
+  },
+  "author": "vessellook",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vessellook/web_course/issues"
+  },
+  "homepage": "https://github.com/vessellook/web_course#readme",
+  "dependencies": {
+    "@vueuse/components": "^7.3.0",
+    "@vueuse/core": "^7.3.0",
+    "jwt-decode": "^3.1.2",
+    "vue": "^3.2.24",
+    "vue-router": "^4.0.12",
+    "vuex": "^4.0.2",
+    "vuex-persistedstate": "^4.1.0"
+  },
+  "devDependencies": {
+    "@vue/compiler-sfc": "^3.2.24",
+    "babel-loader": "^8.2.3",
+    "css-loader": "^6.5.1",
+    "dotenv-webpack": "^7.0.3",
+    "style-loader": "^3.3.1",
+    "vue-loader": "^16.8.3",
+    "webpack": "^5.65.0",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.6.0"
+  }
+}
