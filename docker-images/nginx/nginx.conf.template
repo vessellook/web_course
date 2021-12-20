@@ -21,6 +21,10 @@ server {
       fastcgi_param PATH_INFO $fastcgi_path_info;
     }
 
+    location ~^/(favicon.ico)$ {
+          try_files $uri =404;
+    }
+
     location / {
       try_files $uri $uri/ /index.html;
     }
