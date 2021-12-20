@@ -12,8 +12,8 @@ class Product implements JsonSerializable
         private string   $uid,
         private string   $name,
         private int      $price,
-        private int      $count)
-    {
+        private int      $count
+    ) {
     }
 
     /**

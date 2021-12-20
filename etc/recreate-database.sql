@@ -26,7 +26,7 @@ CREATE TABLE `order`
     id      INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED REFERENCES user (id),
     address TEXT,
-    status  ENUM( 'created',
+    status  ENUM('created',
         'fixed',
         'transportation_offered',
         'transportation_approved',
@@ -79,24 +79,4 @@ CREATE TABLE transportation
     date     DATE,
     address  TEXT,
     status   VARCHAR(255)
-);
-
-DROP TABLE IF EXISTS change_password_token;
-CREATE TABLE change_password_token
-(
-    id       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id  INT UNSIGNED NOT NULL UNIQUE REFERENCES user (id) ON DELETE CASCADE,
-    token    VARCHAR(255) NOT NULL,
-    creation TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-DROP TABLE IF EXISTS device;
-CREATE TABLE device
-(
-    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    user_id     INT UNSIGNED REFERENCES user (id),
-    comment     VARCHAR(255),
-    creation    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_access TIMESTAMP,
-    invalidated BOOLEAN   DEFAULT FALSE
 );

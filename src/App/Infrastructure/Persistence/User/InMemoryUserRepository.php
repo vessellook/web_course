@@ -5,29 +5,21 @@ namespace App\Infrastructure\Persistence\User;
 
 use App\Domain\User\User;
 use App\Domain\User\UserNotFoundException;
+use App\Domain\User\UserRegistrationFailureException;
 use App\Domain\User\UserRepository;
 
 class InMemoryUserRepository implements UserRepository
 {
-    /**
-     * @var User[]
-     */
-    private $users;
+
+    private int $counter = 0;
 
     /**
      * InMemoryUserRepository constructor.
      *
-     * @param array|null $users
+     * @param array $users
      */
-    public function __construct(array $users = null)
+    public function __construct(private array $users = [])
     {
-        $this->users = $users ?? [
-            1 => new User(1, 'bill.gates', 'Bill', 'Gates'),
-            2 => new User(2, 'steve.jobs', 'Steve', 'Jobs'),
-            3 => new User(3, 'mark.zuckerberg', 'Mark', 'Zuckerberg'),
-            4 => new User(4, 'evan.spiegel', 'Evan', 'Spiegel'),
-            5 => new User(5, 'jack.dorsey', 'Jack', 'Dorsey'),
-        ];
     }
 
     /**
@@ -48,5 +40,27 @@ class InMemoryUserRepository implements UserRepository
         }
 
         return $this->users[$id];
+    }
+
+    public function findUserOfLogin(string $login): User
+    {
+        $userWithLoginArr = array_filter($this->users, fn($user) => $user->login === $login);
+        if (!$userWithLoginArr) {
+            throw new UserNotFoundException();
+        }
+
+        return $userWithLoginArr[0];
+    }
+
+    public function registerNewUser(User $user): User
+    {
+        if (count(array_filter($this->users, fn($user) => $user->getLogin() === $user->getLogin()))) {
+            throw new UserRegistrationFailureException();
+        }
+        $this->counter++;
+        $newUser = clone $user;
+        $newUser->setId($this->counter);
+        $this->users[$this->counter] = $newUser;
+        return $newUser;
     }
 }

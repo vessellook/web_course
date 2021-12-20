@@ -5,7 +5,7 @@ namespace App\Application\Actions\Product;
 
 use App\Domain\DomainException\DomainRecordNotFoundException;
 use App\Domain\Product\Product;
-use App\Domain\Product\ProductAlreadyExistsException;
+use App\Domain\Product\ProductCreationFailureException;
 use App\Domain\Product\ProductNotFoundException;
 use Assert\Assert;
 use Assert\Assertion;
@@ -52,7 +52,7 @@ class CreateProductAction extends ProductAction
         try {
             $product = $this->productRepository->createProduct($product);
             return $this->respondWithData($product);
-        } catch (ProductAlreadyExistsException $exception) {
+        } catch (ProductCreationFailureException $exception) {
             throw new HttpBadRequestException($this->request, $exception->getMessage());
         }
     }

@@ -5,7 +5,7 @@ namespace App\Infrastructure\Persistence\Product;
 
 use \Exception;
 use App\Domain\Product\Product;
-use App\Domain\Product\ProductAlreadyExistsException;
+use App\Domain\Product\ProductCreationFailureException;
 use App\Domain\Product\ProductNotFoundException;
 use App\Domain\Product\ProductRepository;
 use PDO;
@@ -82,7 +82,7 @@ class PdoProductRepository implements ProductRepository
         $stmt->bindValue('price', $product->getPrice());
         $stmt->bindValue('count', $product->getCount());
         if (!$stmt->execute()) {
-            throw new ProductAlreadyExistsException();
+            throw new ProductCreationFailureException();
         }
         $id = intval($this->pdo->lastInsertId());
         $stmt = $this->pdo->query("SELECT * FROM product WHERE id = $id");

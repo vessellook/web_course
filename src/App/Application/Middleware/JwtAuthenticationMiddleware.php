@@ -15,6 +15,7 @@ use Psr\Log\LoggerInterface;
 
 class JwtAuthenticationMiddleware implements Middleware
 {
+    public const SESSION_TOKEN_NAME = 'SESSION-TOKEN';
 
     public function __construct(private LoggerInterface $logger, private JwtGenerator $jwtGenerator)
     {
@@ -25,12 +26,11 @@ class JwtAuthenticationMiddleware implements Middleware
      */
     public function process(Request $request, RequestHandler $handler): Response
     {
-        $sessionTokenName = 'SESSION_TOKEN';
-        if ($request->hasHeader($sessionTokenName)) {
+        if ($request->hasHeader(self::SESSION_TOKEN_NAME)) {
             $this->logger->info('No SESSION_TOKEN received', ['line' => __LINE__, 'file' => __FILE__]);
             return new \Slim\Psr7\Response(status: 401);
         }
-        $sessionToken = $request->getHeader($sessionTokenName)[0];
+        $sessionToken = $request->getHeader(self::SESSION_TOKEN_NAME)[0];
         try {
             $token = $this->jwtGenerator->parseToken($sessionToken);
             $this->jwtGenerator->validateToken($token);
@@ -41,7 +41,7 @@ class JwtAuthenticationMiddleware implements Middleware
             $response = $handler->handle($request
                 ->withAttribute('userId', $userId)
                 ->withAttribute('role', $role));
-            $response->withHeader($sessionTokenName, $newToken->toString());
+            $response->withHeader(self::SESSION_TOKEN_NAME, $newToken->toString());
             return $response;
         } catch (CannotDecodeContent|InvalidTokenStructure|UnsupportedHeaderFound|RequiredConstraintsViolated
         $exception) {

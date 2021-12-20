@@ -1,9 +1,12 @@
 <?php
 declare(strict_types=1);
 
+use App\Application\Actions\DummyAction;
 use App\Application\Actions\Product\CreateProductAction;
 use App\Application\Actions\Product\ListProductsAction;
 use App\Application\Actions\Setup\FillDatabaseAction;
+use App\Application\Actions\Sign\GenerateTokenAction;
+use App\Application\Actions\Sign\RegisterUserAction;
 use App\Application\Actions\User\ListUsersAction;
 use App\Application\Actions\User\ViewUserAction;
 use App\Application\Actions\Setup\CreateDatabaseAction;
@@ -17,8 +20,12 @@ return function (App $app) {
     $app->group('/api/v1', function (Group $api) {
         $api->group('/users', function (Group $group) {
             $group->get('', ListUsersAction::class);
+            $group->post('', RegisterUserAction::class);
             $group->get('/{id}', ViewUserAction::class);
         });
+
+        $api->get('/token#update', DummyAction::class)->add(JwtAuthenticationMiddleware::class);
+        $api->get('/token[?.*]', GenerateTokenAction::class);
 
         $api->group('/products', function (Group $group) {
             $group->get('', ListProductsAction::class);

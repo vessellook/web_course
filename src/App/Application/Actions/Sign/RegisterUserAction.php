@@ -20,7 +20,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Log\LoggerInterface;
 use Slim\Exception\HttpBadRequestException;
 
-class SignUpAction extends Action
+class RegisterUserAction extends Action
 {
 
     public function __construct(
@@ -32,27 +32,27 @@ class SignUpAction extends Action
 
     protected function action(): Response
     {
-        $body = $this->request->getParsedBody();
+        $params = $this->request->getParsedBody();
         try {
-            Assert::that($body)->isArray()
+            Assert::that($params)->isArray()
                 ->keyExists('login')
                 ->keyExists('password')
                 ->keyExists('email')
                 ->keyExists('name');
-            Assertion::notBlank($body['login']);
-            Assertion::email($body['email']);
-            Assertion::notBlank($body['password']);
-            if (isset($body['phoneNumber'])) {
-                Assert::that($body['phoneNumber'])->string();
+            Assertion::notBlank($params['login']);
+            Assertion::email($params['email']);
+            Assertion::notBlank($params['password']);
+            if (isset($params['phoneNumber'])) {
+                Assert::that($params['phoneNumber'])->string();
             }
             $user = new User(
                 id: null,
                 role: 'customer',
-                login: $body['login'],
-                email: $body['email'],
-                phoneNumber: $body['phoneNumber'] ?? null,
-                passwordHash: $body['password'], // TODO: convert password to hash
-                name: $body['name']
+                login: $params['login'],
+                email: $params['email'],
+                phoneNumber: $params['phoneNumber'] ?? null,
+                passwordHash: $params['password'], // TODO: convert password to hash
+                name: $params['name']
             );
             $this->userRepository->registerNewUser($user);
             $this->logger->info('user with login "' . $user->getLogin() . '" is registered');

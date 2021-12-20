@@ -12,10 +12,15 @@ class User implements JsonSerializable
         private string $role,
         private string $login,
         private string $email,
-        private string $phone_number,
-        private string $password_hash,
-        private string $name)
+        private ?string $phoneNumber,
+        private string $passwordHash,
+        private string $name
+    ) {
+    }
+
+    public function setId(int $id): void
     {
+        $this->id = $id;
     }
 
     public function getId(): ?int
@@ -43,23 +48,25 @@ class User implements JsonSerializable
         return $this->name;
     }
 
-    public function getPhoneNumber(): string
+    public function getPhoneNumber(): ?string
     {
-        return $this->phone_number;
+        return $this->phoneNumber;
     }
 
     public function getPasswordHash(): string
     {
-        return $this->password_hash;
+        return $this->passwordHash;
     }
 
     public function jsonSerialize(): array
     {
         return [
             'id' => $this->id,
-            'username' => $this->username,
-            'firstName' => $this->firstName,
-            'lastName' => $this->lastName,
+            'role' => $this->role,
+            'login' => $this->login,
+            'email' => $this->email,
+            'phoneNumber' => $this->phoneNumber,
+            'name' => $this->name
         ];
     }
 }

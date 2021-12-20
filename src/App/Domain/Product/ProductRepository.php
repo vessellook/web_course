@@ -27,7 +27,7 @@ interface ProductRepository
     /**
      * @param Product $product
      * @return Product
-     * @throws ProductAlreadyExistsException
+     * @throws ProductCreationFailureException
      */
     public function createProduct(Product $product): Product;
 }

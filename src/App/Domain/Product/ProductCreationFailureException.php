@@ -2,9 +2,9 @@
 
 namespace App\Domain\Product;
 
-use App\Domain\DomainException\DomainRecordAlreadyExistsException;
+use App\Domain\DomainException\DomainRecordCreationFailureException;
 
-class ProductAlreadyExistsException extends DomainRecordAlreadyExistsException
+class ProductCreationFailureException extends DomainRecordCreationFailureException
 {
-    public $message = 'The product you try to create exists.';
+    public $message = "The product can't be created.";
 }

@@ -5,19 +5,17 @@ namespace App\Application\Actions\Sign;
 
 use App\Application\Actions\Action;
 use App\Application\JwtGenerator\JwtGenerator;
-use App\Domain\DomainException\DomainRecordNotFoundException;
+use App\Application\Middleware\JwtAuthenticationMiddleware;
 use App\Domain\Product\ProductRepository;
 use App\Domain\User\UserNotFoundException;
 use App\Domain\User\UserRepository;
 use Assert\Assert;
-use Assert\Assertion;
 use Assert\AssertionFailedException;
-use PDO;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Log\LoggerInterface;
-use Slim\Exception\HttpBadRequestException;
+use Slim\Psr7\Headers;
 
-class GetTokenAction extends Action
+class GenerateTokenAction extends Action
 {
 
     public function __construct(
@@ -34,7 +32,7 @@ class GetTokenAction extends Action
      */
     protected function action(): Response
     {
-        $body = $this->request->getParsedBody();
+        $body = $this->request->getQueryParams();
         try {
             Assert::that($body)->isArray()
                 ->keyExists('login')
@@ -45,8 +43,13 @@ class GetTokenAction extends Action
             if ($user->getPasswordHash() !== $body['password']) {
                 return new \Slim\Psr7\Response(status: 400);
             }
-            return new \Slim\Psr7\Response(status: 200);
-        } catch (AssertionFailedException|UserNotFoundException) {
+            $host = $this->request->getUri()->getHost();
+            $token = $this->jwtGenerator->generateToken($user->getId(), $host, $user->getRole());
+            return new \Slim\Psr7\Response(status: 200, headers: new Headers([
+                JwtAuthenticationMiddleware::SESSION_TOKEN_NAME => $token->toString()
+            ]));
+        } catch (AssertionFailedException|UserNotFoundException $exception) {
+            $this->logger->info($exception->getMessage(), ['file' => __FILE__, 'line' => __LINE__]);
             return new \Slim\Psr7\Response(status: 400);
         }
     }
