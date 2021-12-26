@@ -24,4 +24,8 @@ interface UserRepository
      * @throws UserRegistrationFailureException
      */
     public function registerNewUser(User $user): User;
+
+    public function updateUser(User $old, User $new): User;
+
+    public function deleteUser(User $user): bool;
 }

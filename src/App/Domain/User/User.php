@@ -11,10 +11,7 @@ class User implements JsonSerializable
         private ?int   $id,
         private string $role,
         private string $login,
-        private string $email,
-        private ?string $phoneNumber,
-        private string $passwordHash,
-        private string $name
+        private string $password
     ) {
     }
 
@@ -38,24 +35,18 @@ class User implements JsonSerializable
         return $this->login;
     }
 
-    public function getEmail(): string
+    public function getPassword(): string
     {
-        return $this->email;
+        return $this->password;
     }
 
-    public function getName(): string
+    public function areSameAttributes(User $other): bool
     {
-        return $this->name;
-    }
-
-    public function getPhoneNumber(): ?string
-    {
-        return $this->phoneNumber;
-    }
-
-    public function getPasswordHash(): string
-    {
-        return $this->passwordHash;
+        $a = $this->jsonSerialize();
+        $b = $other->jsonSerialize();
+        unset($a['id']);
+        unset($b['id']);
+        return $a == $b;
     }
 
     public function jsonSerialize(): array
@@ -63,10 +54,7 @@ class User implements JsonSerializable
         return [
             'id' => $this->id,
             'role' => $this->role,
-            'login' => $this->login,
-            'email' => $this->email,
-            'phoneNumber' => $this->phoneNumber,
-            'name' => $this->name
+            'login' => $this->login
         ];
     }
 }

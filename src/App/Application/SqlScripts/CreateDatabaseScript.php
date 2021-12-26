@@ -2,20 +2,19 @@
 
 namespace App\Application\SqlScripts;
 
+use PDO;
+
 class CreateDatabaseScript
 {
     private string $query;
 
-    public function __construct(string $path)
+    public function __construct(string $path, private PDO $pdo)
     {
         $this->query = file_get_contents($path);
     }
 
-    /**
-     * @return string
-     */
-    public function getQuery(): string
+    public function run(): bool
     {
-        return $this->query;
+        return boolval($this->pdo->query($this->query));
     }
 }

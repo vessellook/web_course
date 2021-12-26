@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Order;
 
-use App\Domain\DomainException\DomainException;
 use App\Domain\DomainException\DomainRecordCreationFailureException;
 
 interface OrderRepository
@@ -11,7 +10,12 @@ interface OrderRepository
     /**
      * @return Order[]
      */
-    public function findAllOrdersOfUser(int $userId): array;
+    public function findAll(): array;
+
+    /**
+     * @return Order[]
+     */
+    public function findAllOfCustomer(int $customerId): array;
 
     /**
      * @param int $id
@@ -27,18 +31,7 @@ interface OrderRepository
      */
     public function createOrder(Order $order): Order;
 
-    /**
-     * @param Order $order
-     * @param OrderItem $item
-     * @throws DomainException
-     */
-    public function removeItemFromOrder(OrderItem $item, Order $order): void;
+    public function updateOrder(Order $old, Order $new): Order;
 
-    /**
-     * @param OrderItem $item
-     * @param Order $order
-     * @return OrderItem
-     * @throws DomainException
-     */
-    public function addItemToOrder(OrderItem $item, Order $order): OrderItem;
+    public function deleteOrder(int $orderId): bool;
 }

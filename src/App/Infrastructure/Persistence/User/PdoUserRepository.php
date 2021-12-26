@@ -8,20 +8,18 @@ use App\Domain\User\User;
 use App\Domain\User\UserNotFoundException;
 use App\Domain\User\UserRegistrationFailureException;
 use App\Domain\User\UserRepository;
+use Exception;
 use PDO;
 
 class PdoUserRepository implements UserRepository
 {
-    private function convertRowToUser(array $row): User
+    private static function convertRowToUser(array $row): User
     {
         return new User(
-            $row['id'],
-            $row['role'],
-            $row['login'],
-            $row['email'],
-            $row['phone_number'],
-            $row['password_hash'],
-            $row['name'],
+            id: $row['id'],
+            role: $row['role'],
+            login: $row['login'],
+            password: $row['password']
         );
     }
 
@@ -37,15 +35,12 @@ class PdoUserRepository implements UserRepository
     {
         $stmt = $this->pdo->query('SELECT * FROM user');
         $rows = $stmt->fetchAll();
-        return array_map([$this, 'convertRowToUser'], $rows);
+        return array_map('self::convertRowToUser', $rows);
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function findUserOfId(int $id): User
+    private function findUserById(int $id, bool $forUpdate = false): User
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM user WHERE id = :id');
+        $stmt = $this->pdo->prepare('SELECT * FROM user WHERE id = :id' . ($forUpdate ? ' FOR UPDATE' : ''));
         $stmt->bindValue('id', $id);
         $stmt->execute();
         $row = $stmt->fetch();
@@ -53,6 +48,15 @@ class PdoUserRepository implements UserRepository
             throw new UserNotFoundException();
         }
         return $this->convertRowToUser($row);
+    }
+
+
+    /**
+     * @inheritDoc
+     */
+    public function findUserOfId(int $id): User
+    {
+        return $this->findUserById($id);
     }
 
     /**
@@ -75,19 +79,48 @@ class PdoUserRepository implements UserRepository
      */
     public function registerNewUser(User $user): User
     {
-        $stmt = $this->pdo->prepare('INSERT INTO user (role, login, email, phone_number, password_hash, name)
- VALUES (:role, :login, :email, :phone_number, :password_hash, :name)');
-        $stmt->bindValue('role', $user->getRole());
-        $stmt->bindValue('login', $user->getLogin());
-        $stmt->bindValue('email', $user->getEmail());
-        $stmt->bindValue('phone_number', $user->getPhoneNumber());
-        $stmt->bindValue('password_hash', $user->getPasswordHash());
-        $stmt->bindValue('name', $user->getName());
+        $stmt = $this->pdo->prepare('INSERT INTO user (role, login, password) VALUES (?, ?, ?)');
+        $stmt->bindValue(1, $user->getRole());
+        $stmt->bindValue(2, $user->getLogin());
+        $stmt->bindValue(3, $user->getPassword());
         if (!$stmt->execute()) {
             throw new UserRegistrationFailureException();
         }
         $id = intval($this->pdo->lastInsertId());
         $user->setId($id);
         return $user;
+    }
+
+    public function updateUser(User $old, User $new): User
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $realOld = $this->findUserById($old->getId(), forUpdate: true);
+            if (!$realOld->areSameAttributes($old)) {
+                $this->pdo->rollBack();
+                return $realOld;
+            }
+            $stmt = $this->pdo->query('UPDATE user SET role = ?, login = ?, password = ? WHERE id = ?');
+            $stmt->bindValue(1, $new->getRole());
+            $stmt->bindValue(2, $new->getLogin());
+            $stmt->bindValue(3, $new->getPassword());
+            $stmt->bindValue(4, $old->getId());
+            if (!$stmt->execute()) {
+                $this->pdo->rollBack();
+                return $old;
+            }
+            $this->pdo->commit();
+            $new->setId($old->getId());
+            return $new;
+        } catch (Exception) {
+            $this->pdo->rollBack();
+            return $old;
+        }
+    }
+
+    public function deleteUser(User $user): bool
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM user WHERE id = ?');
+        return $stmt->execute([$user->getId()]);
     }
 }

@@ -10,7 +10,7 @@ use Lcobucci\JWT\Token;
 
 class JwtGenerator
 {
-    public function __construct(private Configuration $configuration)
+    public function __construct(private Configuration $configuration, private DateInterval $inactivityTimeout)
     {
     }
 
@@ -20,7 +20,7 @@ class JwtGenerator
         return $this->configuration->builder()
             ->issuedBy($issuer)
             ->issuedAt($now)
-            ->expiresAt($now->add(new DateInterval('PT2M'))) // +2 minutes
+            ->expiresAt($now->add($this->inactivityTimeout))
             ->withHeader('userId', $userId)
             ->withHeader('role', $role)
             ->getToken(

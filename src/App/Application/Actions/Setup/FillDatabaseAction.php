@@ -2,9 +2,21 @@
 
 namespace App\Application\Actions\Setup;
 
+use App\Application\Actions\Action;
 use App\Application\Actions\ActionError;
 use App\Application\Actions\ActionPayload;
 use App\Application\SqlScripts\CreateDatabaseScript;
+use App\Domain\Customer\Customer;
+use App\Domain\Customer\CustomerRepository;
+use App\Domain\Order\Order;
+use App\Domain\Order\OrderRepository;
+use App\Domain\Product\Product;
+use App\Domain\Product\ProductRepository;
+use App\Domain\Transportation\Transportation;
+use App\Domain\Transportation\TransportationRepository;
+use App\Domain\User\User;
+use App\Domain\User\UserRepository;
+use DateTimeImmutable;
 use Exception;
 use App\Domain\DomainException\DomainRecordNotFoundException;
 use PDO;
@@ -12,8 +24,21 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Log\LoggerInterface;
 use Slim\Exception\HttpBadRequestException;
 
-class FillDatabaseAction extends DatabaseAction
+class FillDatabaseAction extends Action
 {
+    public function __construct(
+        LoggerInterface                  $logger,
+        private CreateDatabaseScript     $script,
+        private UserRepository           $userRepository,
+        private CustomerRepository       $customerRepository,
+        private ProductRepository        $productRepository,
+        private OrderRepository          $orderRepository,
+        private TransportationRepository $transportationRepository
+    )
+    {
+        parent::__construct($logger);
+    }
+
     /**
      * @throws Exception
      */
@@ -23,28 +48,27 @@ class FillDatabaseAction extends DatabaseAction
             [
                 'name' => 'Лампа',
                 'uid' => 'А-12345',
-                'price' => 100000,
-                'count' => 200
+                'price' => 100000
             ],
             [
                 'name' => 'Радио',
                 'uid' => 'А-54321',
-                'price' => 200000,
-                'count' => 150
+                'price' => 200000
             ],
             [
                 'name' => 'Настенные часы',
                 'uid' => 'А-12121',
-                'price' => 150000,
-                'count' => 220
+                'price' => 150000
             ]
         ];
-        $stmt = 'INSERT INTO product (uid, name, price, count) VALUES (:uid, :name, :price, :count)';
-        $stmt = $this->pdo->prepare($stmt);
-        foreach ($products as $rowData) {
-            if (!$stmt->execute($rowData)) {
-                throw new Exception($stmt->errorInfo()[2]);
-            }
+        $products = array_map(fn($product) => new Product(
+            id: null,
+            uid: $product['uid'],
+            name: $product['name'],
+            price: $product['price'],
+        ), $products);
+        foreach ($products as $product) {
+            $this->productRepository->createProduct($product);
         }
     }
 
@@ -57,43 +81,65 @@ class FillDatabaseAction extends DatabaseAction
             [
                 'role' => 'director',
                 'login' => 'director@progress.ru',
-                'email' => 'director@progress.ru',
-                'phone_number' => null,
                 'password' => 'director',
-                'name' => 'Борис Николаевич Золоторуков'
             ],
             [
                 'role' => 'operator',
                 'login' => 'operator@progress.ru',
-                'email' => 'operator@progress.ru',
-                'phone_number' => null,
                 'password' => 'operator',
-                'name' => 'Сергей Петрович Иванов'
             ],
             [
-                'role' => 'customer',
-                'login' => 'customer@mail.ru',
-                'email' => 'customer@mail.ru',
-                'phone_number' => '+79998887766',
-                'password' => 'customer',
-                'name' => 'Пётр Петрович Сидоров'
+                'role' => 'operator',
+                'login' => 'operator@mail.ru',
+                'password' => 'operator',
             ],
             [
-                'role' => 'customer',
-                'login' => 'customer2@mail.ru',
-                'email' => 'customer2@mail.ru',
-                'phone_number' => null,
-                'password' => 'customer2',
-                'name' => 'Николай Александрович Волков'
+                'role' => 'operator',
+                'login' => 'operator2@mail.ru',
+                'password' => 'operator2',
             ]
         ];
-        $stmt = 'INSERT INTO user (role, login, email, phone_number, password_hash, name)
- VALUES (:role, :login, :email, :phone_number, :password, :name)';
-        $stmt = $this->pdo->prepare($stmt);
-        foreach ($users as $rowData) {
-            if (!$stmt->execute($rowData)) {
-                throw new Exception($stmt->errorInfo()[2]);
-            }
+        $users = array_map(fn($user) => new User(
+            id: null,
+            role: $user['role'],
+            login: $user['login'],
+            password: $user['password']
+        ), $users);
+        foreach ($users as $user) {
+            $this->userRepository->registerNewUser($user);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function createCustomers()
+    {
+        $customers = [
+            [
+                'name' => 'ООО Рога и Копыта',
+                'phoneNumber' => null,
+                'address' => null
+            ],
+            [
+                'name' => 'ИП Шарашкина',
+                'phoneNumber' => '+7999553535',
+                'address' => 'Москва, ул. Дубосековская, 5'
+            ],
+            [
+                'name' => 'ИП Кипящий',
+                'phoneNumber' => null,
+                'address' => null
+            ]
+        ];
+        $customers = array_map(fn($customer) => new Customer(
+            id: null,
+            name: $customer['name'],
+            address: $customer['address'],
+            phoneNumber: $customer['phoneNumber'],
+        ), $customers);
+        foreach ($customers as $customer) {
+            $this->customerRepository->createCustomer($customer);
         }
     }
 
@@ -102,84 +148,90 @@ class FillDatabaseAction extends DatabaseAction
      */
     public function createOrders()
     {
-        $orders = [
+        $orderValues = [
             [
-                'user_login' => 'customer@mail.ru',
-                'address' => null,
-                'status' => 'created',
-                'price' => null,
-                'items' => [
+                'customer_name' => 'ИП Кипящий',
+                'address' => 'Москва, Каширское шоссе, 64 корпус 1',
+                'product_uid' => 'А-12345',
+                'date' => null,
+                'agreement_code' => null,
+                'agreement_url' => null,
+                'transportations' => [
                     [
-                        'product_uid' => 'А-54321',
-                        'count' => 1
+                        'planned_date' => new DateTimeImmutable('2021-12-20'),
+                        'real_date' => null,
+                        'number' => 30,
+                        'status' => 'planned'
+                    ],
+                    [
+                        'planned_date' => new DateTimeImmutable('2022-01-01'),
+                        'real_date' => null,
+                        'number' => 20,
+                        'status' => 'planned'
                     ]
                 ]
             ],
             [
-                'user_login' => 'customer2@mail.ru',
-                'address' => 'Москва, Каширское шоссе, 64 корпус 1',
-                'status' => 'fixed',
-                'price' => 200000,
-                'items' => [
+                'customer_name' => 'ИП Кипящий',
+                'address' => 'Москва, ул. Дубосековская, 5',
+                'product_uid' => 'А-54321',
+                'date' => null,
+                'agreement_code' => null,
+                'agreement_url' => null,
+                'transportations' => [
                     [
-                        'product_uid' => 'А-12345',
-                        'count' => 2
+                        'planned_date' => new DateTimeImmutable('2021-12-20'),
+                        'real_date' => new DateTimeImmutable('2021-12-21'),
+                        'number' => 10,
+                        'status' => 'finished'
                     ]
                 ]
             ]
         ];
+        $products = $this->productRepository->findAll();
+        $customers = $this->customerRepository->findAll();
+        array_walk($orderValues, function (&$order) use ($products, $customers) {
+            $productArr = array_filter($products, fn($product) => $product->getUid() === $order['product_uid']);
+            $productArr = array_values($productArr);
+            $order['product_id'] = count($productArr) > 0 ? $productArr[0]->getId() : throw new Exception();
 
-        foreach ($orders as $order) {
-            $stmt = 'SELECT id FROM user WHERE login = :user_login';
-            $stmt = $this->pdo->prepare($stmt);
-            $stmt->bindParam('user_login', $order['user_login']);
-            $stmt->execute();
-            $row = $stmt->fetch();
-            $order['user_id'] = $row['id'];
+            $customerArr = array_filter($customers, fn($customer) => $customer->getName() === $order['customer_name']);
+            $customerArr = array_values($customerArr);
+            $order['customer_id'] = count($customerArr) > 0 ? $customerArr[0]->getId() : throw new Exception();
+        });
 
-            $stmt = 'INSERT INTO `order` (user_id, address, status, price) 
-VALUES (:user_id, :address, :status, :price)';
-            $stmt = $this->pdo->prepare($stmt);
-            $stmt->bindParam('user_id', $order['user_id']);
-            $stmt->bindParam('address', $order['address']);
-            $stmt->bindParam('status', $order['status']);
-            $stmt->bindParam('price', $order['price']);
-            if (!$stmt->execute()) {
-                throw new Exception($stmt->errorInfo()[2]);
-            }
+        $orders = array_map(fn($order) => new Order(
+            id: null,
+            customerId: $order['customer_id'],
+            productId: $order['product_id'],
+            address: $order['address'],
+            date: $order['date'] ?? null,
+            agreementCode: $order['agreement_code'] ?? null,
+            agreementUrl: $order['agreement_url'] ?? null,
+        ), $orderValues);
 
-            $order['id'] = $this->pdo->lastInsertId();
+        array_walk($orders, fn($order) => $this->orderRepository->createOrder($order));
 
-            if (!isset($order['items'])) {
+        for ($i = 0; $i < count($orders); $i++) {
+            if (empty($orderValues[$i]['transportations'])) {
                 continue;
             }
-            foreach ($order['items'] as $item) {
-                $stmt = 'SELECT id FROM product WHERE uid = :product_uid';
-                $stmt = $this->pdo->prepare($stmt);
-                $stmt->bindParam('product_uid', $item['product_uid']);
-                $stmt->execute();
-                $row = $stmt->fetch();
-                $item['product_id'] = $row['id'];
-
-                $stmt = 'INSERT INTO order_product (product_id, order_id, count) 
-VALUES (:product_id, :order_id, :count)';
-                $stmt = $this->pdo->prepare($stmt);
-                $stmt->bindParam('product_id', $item['product_id']);
-                $stmt->bindParam('order_id', $order['id']);
-                $stmt->bindParam('count', $item['count']);
-                if (!$stmt->execute()) {
-                    throw new Exception($stmt->errorInfo()[2]);
-                }
+            $orderId = $orders[$i]->getId();
+            $transportations = array_map(
+                fn($transportation) => new Transportation(
+                    id: null,
+                    orderId: $orderId,
+                    plannedDate: $transportation['planned_date'],
+                    realDate: $transportation['real_date'] ?? null,
+                    number: $transportation['number'],
+                    status: $transportation['status'],
+                ),
+                $orderValues[$i]['transportations']
+            );
+            foreach ($transportations as $transportation) {
+                $this->transportationRepository->createTransportation($transportation);
             }
         }
-    }
-
-    public function __construct(
-        LoggerInterface      $logger,
-        PDO $pdo,
-        private CreateDatabaseScript $createDatabaseScript
-    ) {
-        parent::__construct($logger, $pdo);
     }
 
     /**
@@ -187,11 +239,16 @@ VALUES (:product_id, :order_id, :count)';
      */
     protected function action(): Response
     {
-        $this->pdo->query($this->createDatabaseScript->getQuery());
+        $this->script->run();
         try {
             $this->createProducts();
+            $this->logger->debug('products created');
             $this->createUsers();
+            $this->logger->debug('users created');
+            $this->createCustomers();
+            $this->logger->debug('customers created');
             $this->createOrders();
+            $this->logger->debug('orders and transportations created');
         } catch (Exception $exception) {
             $actionError = new ActionError($exception::class, $exception->getMessage());
             return $this->respond(new ActionPayload(statusCode: 500, error: $actionError));

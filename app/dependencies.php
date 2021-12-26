@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Application\JwtGenerator\JwtGenerator;
 use App\Application\Settings\SettingsInterface;
 use App\Application\SqlScripts\CreateDatabaseScript;
 use DI\ContainerBuilder;
@@ -41,7 +42,8 @@ return function (ContainerBuilder $containerBuilder) {
         CreateDatabaseScript::class => function (ContainerInterface $c) {
             $settings = $c->get(SettingsInterface::class);
             $pathToScript = $settings->get('pathToDatabaseCreationScript');
-            return new CreateDatabaseScript($pathToScript);
+            $pdo = $c->get(PDO::class);
+            return new CreateDatabaseScript($pathToScript, $pdo);
         },
         Configuration::class => function (ContainerInterface $c) {
             $settings = $c->get(SettingsInterface::class);
@@ -50,6 +52,11 @@ return function (ContainerBuilder $containerBuilder) {
                 InMemory::file($settings->get('pathToPrivateKey')),
                 InMemory::file($settings->get('pathToPublicKey'))
             );
+        },
+        JwtGenerator::class => function (ContainerInterface $c) {
+            $settings = $c->get(SettingsInterface::class);
+            $configuration = $c->get(Configuration::class);
+            return new JwtGenerator($configuration, $settings->get('inactivityTimeout'));
         }
     ]);
 };

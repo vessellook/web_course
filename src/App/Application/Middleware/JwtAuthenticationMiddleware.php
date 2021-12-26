@@ -26,8 +26,8 @@ class JwtAuthenticationMiddleware implements Middleware
      */
     public function process(Request $request, RequestHandler $handler): Response
     {
-        if ($request->hasHeader(self::SESSION_TOKEN_NAME)) {
-            $this->logger->info('No SESSION_TOKEN received', ['line' => __LINE__, 'file' => __FILE__]);
+        if (!$request->hasHeader(self::SESSION_TOKEN_NAME)) {
+            $this->logger->info('No SESSION-TOKEN received', ['line' => __LINE__, 'file' => __FILE__]);
             return new \Slim\Psr7\Response(status: 401);
         }
         $sessionToken = $request->getHeader(self::SESSION_TOKEN_NAME)[0];
@@ -38,11 +38,10 @@ class JwtAuthenticationMiddleware implements Middleware
             $role = $token->headers()->get('role', 'customer');
             $host = $request->getUri()->getHost();
             $newToken = $this->jwtGenerator->generateToken($userId, $host, $role);
-            $response = $handler->handle($request
+            return $handler->handle($request
                 ->withAttribute('userId', $userId)
-                ->withAttribute('role', $role));
-            $response->withHeader(self::SESSION_TOKEN_NAME, $newToken->toString());
-            return $response;
+                ->withAttribute('role', $role))
+                ->withHeader(self::SESSION_TOKEN_NAME, $newToken->toString());
         } catch (CannotDecodeContent|InvalidTokenStructure|UnsupportedHeaderFound|RequiredConstraintsViolated
         $exception) {
             $this->logger->info($exception->getMessage(), ['line' => __LINE__, 'file' => __FILE__]);

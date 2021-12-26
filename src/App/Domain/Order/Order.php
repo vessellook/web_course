@@ -5,19 +5,21 @@ declare(strict_types=1);
 namespace App\Domain\Order;
 
 use JsonSerializable;
+use \DateTimeImmutable;
 
 class Order implements JsonSerializable
 {
 
-    /** @param OrderItem[] $items */
     public function __construct(
-        private ?int $id,
-        private string $status,
-        private ?int $price,
-        private string $address,
-        private array $items,
-        private int $userId
-    ) {
+        private ?int               $id,
+        private int                $customerId,
+        private int                $productId,
+        private string             $address,
+        private ?DateTimeImmutable $date,
+        private ?string            $agreementCode,
+        private ?string            $agreementUrl
+    )
+    {
     }
 
     public function getId(): ?int
@@ -30,14 +32,14 @@ class Order implements JsonSerializable
         $this->id = $id;
     }
 
-    public function getUserId(): ?int
+    public function getCustomerId(): ?int
     {
-        return $this->userId;
+        return $this->customerId;
     }
 
-    public function getStatus(): string
+    public function getProductId(): int
     {
-        return $this->status;
+        return $this->productId;
     }
 
     public function getAddress(): string
@@ -45,27 +47,40 @@ class Order implements JsonSerializable
         return $this->address;
     }
 
-    public function getPrice(): ?int
+    public function getDate(): ?DateTimeImmutable
     {
-        return $this->price;
+        return $this->date;
     }
 
-    /**
-     * @return OrderItem[]
-     */
-    public function getItems(): array
+    public function getAgreementCode(): ?string
     {
-        return $this->items;
+        return $this->agreementCode;
+    }
+
+    public function getAgreementUrl(): ?string
+    {
+        return $this->agreementUrl;
+    }
+
+    public function areSameAttributes(Order $other): bool
+    {
+        $a = $this->jsonSerialize();
+        $b = $other->jsonSerialize();
+        unset($a['id']);
+        unset($b['id']);
+        return $a == $b;
     }
 
     public function jsonSerialize(): array
     {
         return [
             'id' => $this->id,
-            'userId' => $this->userId,
-            'status' => $this->status,
-            'price' => $this->price,
-            'items' => $this->items
+            'customerId' => $this->customerId,
+            'productId' => $this->productId,
+            'address' => $this->address,
+            'date' => $this->date?->format('Y-m-d'),
+            'agreementCode' => $this->agreementCode,
+            'agreementUrl' => $this->agreementUrl
         ];
     }
 }

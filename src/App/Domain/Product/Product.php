@@ -11,8 +11,7 @@ class Product implements JsonSerializable
         private null|int $id,
         private string   $uid,
         private string   $name,
-        private int      $price,
-        private int      $count
+        private int      $price
     ) {
     }
 
@@ -22,6 +21,14 @@ class Product implements JsonSerializable
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    /**
+     * @param int|null $id
+     */
+    public function setId(?int $id): void
+    {
+        $this->id = $id;
     }
 
     /**
@@ -48,12 +55,13 @@ class Product implements JsonSerializable
         return $this->price;
     }
 
-    /**
-     * @return int
-     */
-    public function getCount(): int
+    public function areSameAttributes(Product $other): bool
     {
-        return $this->count;
+        $a = $this->jsonSerialize();
+        $b = $other->jsonSerialize();
+        unset($a['id']);
+        unset($b['id']);
+        return $a == $b;
     }
 
     public function jsonSerialize(): array
@@ -62,8 +70,7 @@ class Product implements JsonSerializable
             'id' => $this->id,
             'uid' => $this->uid,
             'name' => $this->name,
-            'price' => $this->price / 100,
-            'count' => $this->count
+            'price' => $this->price / 100
         ];
     }
 }

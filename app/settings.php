@@ -11,7 +11,10 @@ return function (ContainerBuilder $containerBuilder) {
     // Global Settings Object
     $containerBuilder->addDefinitions([
         SettingsInterface::class => function () {
-
+            $inactivityTimeout = intval($_ENV['INACTIVITY_TIMEOUT']);
+            if ($inactivityTimeout) {
+                $inactivityTimeout = new DateInterval("PT${inactivityTimeout}S");
+            }
             return new Settings([
                 'displayErrorDetails' => true, // Should be set to false in production
                 'logError' => false,
@@ -23,13 +26,14 @@ return function (ContainerBuilder $containerBuilder) {
                 ],
                 'pathToDatabaseCreationScript' => dirname(__DIR__) . '/etc/recreate-database.sql',
                 'mysql' => [
-                    'password' => $_ENV['MYSQL_PASSWORD'] ?? 'wrong_password',
-                    'user' => $_ENV['MYSQL_USER'] ?? 'wrong_user',
-                    'database' => $_ENV['MYSQL_DATABASE'] ?? 'wrong_db',
-                    'host' => $_ENV['MYSQL_HOST'] ?? 'wrong_host'
+                    'password' => $_ENV['MYSQL_PASSWORD'] ?? throw new Exception('specify password for database'),
+                    'user' => $_ENV['MYSQL_USER'] ?? throw new Exception('specify user for database'),
+                    'database' => $_ENV['MYSQL_DATABASE'] ?? throw new Exception('specify name for database'),
+                    'host' => $_ENV['MYSQL_HOST'] ?? throw new Exception('specify host for database')
                 ],
                 'pathToPrivateKey' => dirname(__DIR__) . '/etc/jwtRS256.key',
                 'pathToPublicKey' => dirname(__DIR__) . '/etc/jwtRS256.key.pub',
+                'inactivityTimeout' => $inactivityTimeout ?? throw new Exception('specify inactivity timeout'),
             ]);
         }
     ]);

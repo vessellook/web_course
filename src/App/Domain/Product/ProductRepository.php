@@ -30,4 +30,8 @@ interface ProductRepository
      * @throws ProductCreationFailureException
      */
     public function createProduct(Product $product): Product;
+
+    public function updateProduct(Product $old, Product $new): Product;
+
+    public function deleteProduct(Product $product): bool;
 }
