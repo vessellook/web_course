@@ -3,7 +3,7 @@ const { VueLoaderPlugin } = require("vue-loader");
 const Dotenv = require('dotenv-webpack');
 
 module.exports = {
-  entry: './src/vue/index.js',
+  entry: './src/front/index.js',
   mode: 'development',
   output: {
     path: path.resolve(__dirname, "public/static/js"),
@@ -36,7 +36,7 @@ module.exports = {
   resolve: {
     extensions: ['*', '.js', '.vue', '.json'],
     alias: {
-      '@': path.resolve('src/vue'),
+      '@': path.resolve('src/front'),
     }
   }
 }
