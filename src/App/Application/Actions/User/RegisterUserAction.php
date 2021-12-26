@@ -35,16 +35,12 @@ class RegisterUserAction extends Action
         $params = $this->request->getParsedBody();
         try {
             Assert::that($params)->isArray()
+                ->keyExists('role')
                 ->keyExists('login')
-                ->keyExists('password')
-                ->keyExists('email')
-                ->keyExists('name');
+                ->keyExists('password');
             Assertion::notBlank($params['login']);
-            Assertion::email($params['email']);
             Assertion::notBlank($params['password']);
-            if (isset($params['phoneNumber'])) {
-                Assert::that($params['phoneNumber'])->string();
-            }
+            Assertion:::in_array($params['role'], ['operator', 'director']);
             $user = new User(
                 id: null,
                 role: 'customer',

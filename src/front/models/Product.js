@@ -1,3 +1,12 @@
+/**
+ *
+ * @property id
+ * @property {string} name
+ * @property {string} uid
+ * @property {number} price
+ * @property {number} count
+ *
+ */
 export default class Product {
   /**
    *

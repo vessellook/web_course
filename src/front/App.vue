@@ -12,9 +12,9 @@
     <div class="main">
       <router-view/>
     </div>
-    <BaseModal :isShow="isShow" @close="closeModal">
-      <AuthenticationForm @loggedIn="closeModal" @registered="closeModal"></AuthenticationForm>
-    </BaseModal>
+    <base-modal :isShow="isShow" @close="closeModal">
+      <authentication-form @loggedIn="closeModal" @registered="closeModal"></authentication-form>
+    </base-modal>
   </div>
 </template>
 

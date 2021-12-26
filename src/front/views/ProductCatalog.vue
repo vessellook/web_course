@@ -4,9 +4,9 @@
 
 <script>
 import ProductList from "../components/ProductList";
-import {fetchProducts} from "@/api";
 import {SHOW_LOGIN_MODAL} from "@/store/mutations";
 import {mapMutations} from "vuex";
+import {getProducts} from "@/api/product";
 export default {
   name: "ProductCatalog",
   components: {ProductList},
@@ -15,7 +15,7 @@ export default {
   }),
   created() {
     console.log(1);
-    fetchProducts()
+    getProducts()
         .then(products => this.products = products)
         .catch(error => { console.log(error); console.log(4)});
   },

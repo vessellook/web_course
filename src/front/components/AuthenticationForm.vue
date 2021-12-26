@@ -31,9 +31,10 @@
 
 <script>
 import TextField from "@/components/TextField";
-import {getToken, registerUser} from "@/api";
+import {getToken} from "@/api";
 import {UPDATE_TOKEN} from "@/store/mutations";
 import CommonButton from "@/components/CommonButton";
+import {registerUser} from "@/api/user";
 
 export default {
   name: "AuthenticationForm",
