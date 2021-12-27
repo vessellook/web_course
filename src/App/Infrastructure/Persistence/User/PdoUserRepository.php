@@ -45,9 +45,9 @@ class PdoUserRepository implements UserRepository
     /**
      * @throws UserNotFoundException
      */
-    private function findUserById(int $id, bool $forUpdate = false): User
+    private function findUserById(int $id): User
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM user WHERE id = :id' . ($forUpdate ? ' FOR UPDATE' : ''));
+        $stmt = $this->pdo->prepare('SELECT * FROM user WHERE id = :id');
         $stmt->bindValue('id', $id);
         $this->pdo->query('LOCK TABLES user READ');
         $stmt->execute();
@@ -113,7 +113,7 @@ class PdoUserRepository implements UserRepository
     {
         $this->pdo->query('LOCK TABLES user WRITE');
         try {
-            $realOld = $this->findUserById($old->getId(), forUpdate: true);
+            $realOld = $this->findUserById($old->getId());
             if (!$realOld->areSameAttributes($old)) {
                 $this->pdo->query('UNLOCK TABLES');
                 return $realOld;

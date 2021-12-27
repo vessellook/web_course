@@ -77,9 +77,9 @@ class PdoTransportationRepository implements TransportationRepository
     /**
      * @throws DomainRecordNotFoundException|AssertionFailedException
      */
-    private function findTransportationById(int $id, bool $forUpdate = false): Transportation
+    private function findTransportationById(int $id): Transportation
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM transportation WHERE id = ?' . ($forUpdate ? ' FOR UPDATE' : ''));
+        $stmt = $this->pdo->prepare('SELECT * FROM transportation WHERE id = ?');
         $this->pdo->query('LOCK TABLES transportation READ');
         $result = $stmt->execute([$id]);
         $this->pdo->query('LOCK TABLES');
@@ -130,7 +130,7 @@ VALUES (?, ?, ?, ?, ?)');
     {
         $this->pdo->query('LOCK TABLES transportation WRITE');
         try {
-            $realOld = $this->findTransportationById($old->getId(), forUpdate: true);
+            $realOld = $this->findTransportationById($old->getId());
             if (!$realOld->areSameAttributes($old)) {
                 $this->pdo->query('UNLOCK TABLES');
                 return $realOld;

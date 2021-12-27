@@ -46,10 +46,10 @@ class PdoProductRepository implements ProductRepository
     /**
      * @throws ProductNotFoundException
      */
-    private function findProductById(int $id, $forUpdate = false): Product
+    private function findProductById(int $id): Product
     {
         $this->pdo->query('LOCK TABLES product READ');
-        $stmt = $this->pdo->query("SELECT * FROM product WHERE id = $id" . ($forUpdate ? ' FOR UPDATE' : ''));
+        $stmt = $this->pdo->query("SELECT * FROM product WHERE id = $id");
         $this->pdo->query('UNLOCK TABLES');
         if (!$stmt) {
             $this->logger->error('error in statement', ['line' => __LINE__, 'file' => __FILE__]);
@@ -110,7 +110,7 @@ class PdoProductRepository implements ProductRepository
     {
         $this->pdo->query('LOCK TABLES product WRITE');
         try {
-            $realOld = $this->findProductById($old->getId(), forUpdate: true);
+            $realOld = $this->findProductById($old->getId());
             if (!$realOld->areSameAttributes($old)) {
                 $this->pdo->query('UNLOCK TABLES');
                 return $realOld;

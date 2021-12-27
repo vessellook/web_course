@@ -47,9 +47,9 @@ class PdoCustomerRepository implements CustomerRepository
     /**
      * @throws CustomerNotFoundException
      */
-    private function findCustomerById(int $id, bool $forUpdate = false): Customer
+    private function findCustomerById(int $id): Customer
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM customer WHERE id = ?' . ($forUpdate ? ' FOR UPDATE' : ''));
+        $stmt = $this->pdo->prepare('SELECT * FROM customer WHERE id = ?');
         $this->pdo->query('LOCK TABLES customer READ');
         $result = $stmt->execute([$id]);
         $this->pdo->query('UNLOCK TABLES');
@@ -95,7 +95,7 @@ class PdoCustomerRepository implements CustomerRepository
     {
         $this->pdo->query('LOCK TABLES customer WRITE');
         try {
-            $realOld = $this->findCustomerById($old->getId(), forUpdate: true);
+            $realOld = $this->findCustomerById($old->getId());
             if (!$realOld->areSameAttributes($old)) {
                 $this->pdo->query('UNLOCK TABLES');
                 return $realOld;

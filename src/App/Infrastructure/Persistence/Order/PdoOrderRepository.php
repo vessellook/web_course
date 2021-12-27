@@ -73,10 +73,10 @@ class PdoOrderRepository implements OrderRepository
     /**
      * @throws OrderNotFoundException
      */
-    private function findOrderById(int $id, bool $forUpdate = false): Order
+    private function findOrderById(int $id): Order
     {
         $this->pdo->query('LOCK TABLES order READ');
-        $stmt = $this->pdo->prepare('SELECT * FROM `order` WHERE id = ?' . ($forUpdate ? ' FOR UPDATE' : ''));
+        $stmt = $this->pdo->prepare('SELECT * FROM `order` WHERE id = ?');
         $result = $stmt->execute([$id]);
         $this->pdo->query('UNLOCK TABLES');
         if (!$result) {
@@ -126,7 +126,7 @@ VALUES (?, ?, ?, ?, ?, ?)');
     {
         $this->pdo->query('LOCK TABLES order WRITE');
         try {
-            $realOld = $this->findOrderById($old->getId(), forUpdate: true);
+            $realOld = $this->findOrderById($old->getId());
             if (!$realOld->areSameAttributes($old)) {
                 $this->pdo->query('UNLOCK TABLES');
                 return $realOld;
