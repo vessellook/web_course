@@ -35,16 +35,23 @@ class PdoUserRepository implements UserRepository
      */
     public function findAll(): array
     {
+        $this->pdo->query('LOCK TABLES user READ');
         $stmt = $this->pdo->query('SELECT * FROM user');
+        $this->pdo->query('UNLOCK TABLES');
         $rows = $stmt->fetchAll();
         return array_map('self::convertRowToUser', $rows);
     }
 
+    /**
+     * @throws UserNotFoundException
+     */
     private function findUserById(int $id, bool $forUpdate = false): User
     {
         $stmt = $this->pdo->prepare('SELECT * FROM user WHERE id = :id' . ($forUpdate ? ' FOR UPDATE' : ''));
         $stmt->bindValue('id', $id);
+        $this->pdo->query('LOCK TABLES user READ');
         $stmt->execute();
+        $this->pdo->query('UNLOCK TABLES');
         $row = $stmt->fetch();
         if (!$row) {
             throw new UserNotFoundException();
@@ -68,7 +75,9 @@ class PdoUserRepository implements UserRepository
     {
         $stmt = $this->pdo->prepare('SELECT * FROM user WHERE login = :login LIMIT 1');
         $stmt->bindValue('login', $login);
+        $this->pdo->query('LOCK TABLES user READ');
         $stmt->execute();
+        $this->pdo->query('UNLOCK TABLES');
         $row = $stmt->fetch();
         if (!$row) {
             throw new UserNotFoundException();
@@ -86,7 +95,10 @@ class PdoUserRepository implements UserRepository
         $stmt->bindValue(2, $user->getLogin());
         $stmt->bindValue(3, $user->getPassword());
         try {
-            if (!$stmt->execute()) {
+            $this->pdo->query('LOCK TABLES user WRITE');
+            $result = $stmt->execute();
+            $this->pdo->query('UNLOCK TABLES');
+            if (!$result) {
                 throw new UserRegistrationFailureException();
             }
         } catch (PDOException) {
@@ -99,11 +111,11 @@ class PdoUserRepository implements UserRepository
 
     public function updateUser(User $old, User $new): User
     {
-        $this->pdo->beginTransaction();
+        $this->pdo->query('LOCK TABLES user WRITE');
         try {
             $realOld = $this->findUserById($old->getId(), forUpdate: true);
             if (!$realOld->areSameAttributes($old)) {
-                $this->pdo->rollBack();
+                $this->pdo->query('UNLOCK TABLES');
                 return $realOld;
             }
             $stmt = $this->pdo->prepare('UPDATE user SET role = ?, login = ?, password = ? WHERE id = ?');
@@ -111,15 +123,15 @@ class PdoUserRepository implements UserRepository
             $stmt->bindValue(2, $new->getLogin());
             $stmt->bindValue(3, $new->getPassword());
             $stmt->bindValue(4, $old->getId());
-            if (!$stmt->execute()) {
-                $this->pdo->rollBack();
+            $result = $stmt->execute();
+            $this->pdo->query('UNLOCK TABLES');
+            if (!$result) {
                 return $old;
             }
-            $this->pdo->commit();
             $new->setId($old->getId());
             return $new;
         } catch (Exception) {
-            $this->pdo->rollBack();
+            $this->pdo->query('UNLOCK TABLES');
             return $old;
         }
     }
@@ -127,6 +139,9 @@ class PdoUserRepository implements UserRepository
     public function deleteUser(User $user): bool
     {
         $stmt = $this->pdo->prepare('DELETE FROM user WHERE id = ?');
-        return $stmt->execute([$user->getId()]);
+        $this->pdo->query('LOCK TABLES user WRITE');
+        $result = $stmt->execute([$user->getId()]);
+        $this->pdo->query('UNLOCK TABLES');
+        return $result;
     }
 }

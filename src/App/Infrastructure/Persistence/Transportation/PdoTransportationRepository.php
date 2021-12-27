@@ -47,7 +47,9 @@ class PdoTransportationRepository implements TransportationRepository
      */
     public function findAll(): array
     {
+        $this->pdo->query('LOCK TABLES transportation READ');
         $stmt = $this->pdo->query('SELECT * FROM transportation');
+        $this->pdo->query('UNLOCK TABLES');
         $rows = $stmt->fetchAll();
         if (!$rows) {
             return [];
@@ -62,7 +64,9 @@ class PdoTransportationRepository implements TransportationRepository
     public function findAllOfOrder(int $orderId): array
     {
         $stmt = $this->pdo->prepare('SELECT * FROM transportation WHERE order_id = ?');
+        $this->pdo->query('LOCK TABLES transportation READ');
         $stmt->execute([$orderId]);
+        $this->pdo->query('UNLOCK TABLES');
         $rows = $stmt->fetchAll();
         if (!$rows) {
             return [];
@@ -76,7 +80,10 @@ class PdoTransportationRepository implements TransportationRepository
     private function findTransportationById(int $id, bool $forUpdate = false): Transportation
     {
         $stmt = $this->pdo->prepare('SELECT * FROM transportation WHERE id = ?' . ($forUpdate ? ' FOR UPDATE' : ''));
-        if (!$stmt->execute([$id])) {
+        $this->pdo->query('LOCK TABLES transportation READ');
+        $result = $stmt->execute([$id]);
+        $this->pdo->query('LOCK TABLES');
+        if (!$result) {
             throw new DomainRecordNotFoundException();
         }
         $row = $stmt->fetch();
@@ -108,7 +115,10 @@ VALUES (?, ?, ?, ?, ?)');
         $stmt->bindValue(3, $transportation->getRealDate()?->format('Y-m-d'));
         $stmt->bindValue(4, $transportation->getNumber());
         $stmt->bindValue(5, $transportation->getStatus());
-        if (!$stmt->execute()) {
+        $this->pdo->query('LOCK TABLES transportation WRITE');
+        $result = $stmt->execute();
+        $this->pdo->query('UNLOCK TABLES');
+        if (!$result) {
             throw new DomainRecordCreationFailureException();
         }
         $transportationId = intval($this->pdo->lastInsertId());
@@ -118,11 +128,11 @@ VALUES (?, ?, ?, ?, ?)');
 
     public function updateTransportation(Transportation $old, Transportation $new): Transportation
     {
-        $this->pdo->beginTransaction();
+        $this->pdo->query('LOCK TABLES transportation WRITE');
         try {
             $realOld = $this->findTransportationById($old->getId(), forUpdate: true);
             if (!$realOld->areSameAttributes($old)) {
-                $this->pdo->rollBack();
+                $this->pdo->query('UNLOCK TABLES');
                 return $realOld;
             }
             $stmt = $this->pdo->prepare("UPDATE transportation
@@ -134,22 +144,24 @@ WHERE id = ?");
             $stmt->bindValue(4, $new->getNumber());
             $stmt->bindValue(5, $new->getStatus());
             $stmt->bindValue(6, $old->getId());
-            if (!$stmt->execute()) {
-                $this->pdo->rollBack();
+            $result = $stmt->execute();
+            $this->pdo->query('UNLOCK TABLES');
+            if (!$result) {
                 return $old;
             }
-            $this->pdo->commit();
             $new->setId($old->getId());
             return $new;
         } catch (Exception|AssertionFailedException) {
-            $this->pdo->rollBack();
+            $this->pdo->query('UNLOCK TABLES');
             return $old;
         }
     }
 
     public function deleteTransportation(int $transportationId): bool
     {
+        $this->pdo->query('LOCK TABLES transportation WRITE');
         $stmt = $this->pdo->prepare('DELETE FROM transportation WHERE id = ?');
+        $this->pdo->query('UNLOCK TABLES');
         return $stmt->execute([$transportationId]);
     }
 }

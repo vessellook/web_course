@@ -34,7 +34,9 @@ class PdoCustomerRepository implements CustomerRepository
      */
     public function findAll(): array
     {
+        $this->pdo->query('LOCK TABLES customer READ');
         $stmt = $this->pdo->query('SELECT * FROM customer');
+        $this->pdo->query('UNLOCK TABLES');
         $rows = $stmt->fetchAll();
         if (!$rows) {
             return [];
@@ -48,7 +50,10 @@ class PdoCustomerRepository implements CustomerRepository
     private function findCustomerById(int $id, bool $forUpdate = false): Customer
     {
         $stmt = $this->pdo->prepare('SELECT * FROM customer WHERE id = ?' . ($forUpdate ? ' FOR UPDATE' : ''));
-        if (!$stmt->execute([$id])) {
+        $this->pdo->query('LOCK TABLES customer READ');
+        $result = $stmt->execute([$id]);
+        $this->pdo->query('UNLOCK TABLES');
+        if (!$result) {
             throw new CustomerNotFoundException();
         }
         $row = $stmt->fetch();
@@ -75,7 +80,10 @@ class PdoCustomerRepository implements CustomerRepository
         $stmt->bindValue(1, $customer->getName());
         $stmt->bindValue(2, $customer->getAddress());
         $stmt->bindValue(3, $customer->getPhoneNumber());
-        if (!$stmt->execute()) {
+        $this->pdo->query('LOCK TABLES customer WRITE');
+        $result = $stmt->execute();
+        $this->pdo->query('UNLOCK TABLES');
+        if (!$result) {
             throw new CustomerCanNotBeCreated();
         }
         $id = intval($this->pdo->lastInsertId());
@@ -85,11 +93,11 @@ class PdoCustomerRepository implements CustomerRepository
 
     public function updateCustomer(Customer $old, Customer $new): Customer
     {
-        $this->pdo->beginTransaction();
+        $this->pdo->query('LOCK TABLES customer WRITE');
         try {
             $realOld = $this->findCustomerById($old->getId(), forUpdate: true);
             if (!$realOld->areSameAttributes($old)) {
-                $this->pdo->rollBack();
+                $this->pdo->query('UNLOCK TABLES');
                 return $realOld;
             }
             $stmt = $this->pdo->prepare("
@@ -98,15 +106,15 @@ UPDATE customer SET name = ?, address = ?, phone_number = ? WHERE id = ?");
             $stmt->bindValue(2, $new->getAddress());
             $stmt->bindValue(3, $new->getPhoneNumber());
             $stmt->bindValue(4, $old->getId());
-            if (!$stmt->execute()) {
-                $this->pdo->rollBack();
+            $result = $stmt->execute();
+            $this->pdo->query('UNLOCK TABLES');
+            if (!$result) {
                 return $old;
             }
-            $this->pdo->commit();
             $new->setId($old->getId());
             return $new;
         } catch (Exception) {
-            $this->pdo->rollBack();
+            $this->pdo->query('UNLOCK TABLES');
             return $old;
         }
     }
@@ -114,6 +122,9 @@ UPDATE customer SET name = ?, address = ?, phone_number = ? WHERE id = ?");
     public function deleteCustomer(int $customerId): bool
     {
         $stmt = $this->pdo->prepare('DELETE FROM customer WHERE id = ?');
-        return $stmt->execute([$customerId]);
+        $this->pdo->query('LOCK TABLES customer WRITE');
+        $result = $stmt->execute([$customerId]);
+        $this->pdo->query('UNLOCK TABLES');
+        return $result;
     }
 }

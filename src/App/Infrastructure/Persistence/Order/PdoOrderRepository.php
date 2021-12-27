@@ -43,7 +43,9 @@ class PdoOrderRepository implements OrderRepository
      */
     public function findAll(): array
     {
+        $this->pdo->query('LOCK TABLES order READ');
         $stmt = $this->pdo->query('SELECT * FROM `order`');
+        $this->pdo->query('UNLOCK TABLES');
         $rows = $stmt->fetchAll();
         if (!$rows) {
             return [];
@@ -58,7 +60,9 @@ class PdoOrderRepository implements OrderRepository
     public function findAllOfCustomer(int $customerId): array
     {
         $stmt = $this->pdo->prepare('SELECT * FROM `order` WHERE customer_id = ?');
+        $this->pdo->query('LOCK TABLES order READ');
         $stmt->execute([$customerId]);
+        $this->pdo->query('UNLOCK TABLES');
         $rows = $stmt->fetchAll();
         if (!$rows) {
             return [];
@@ -71,8 +75,11 @@ class PdoOrderRepository implements OrderRepository
      */
     private function findOrderById(int $id, bool $forUpdate = false): Order
     {
+        $this->pdo->query('LOCK TABLES order READ');
         $stmt = $this->pdo->prepare('SELECT * FROM `order` WHERE id = ?' . ($forUpdate ? ' FOR UPDATE' : ''));
-        if (!$stmt->execute([$id])) {
+        $result = $stmt->execute([$id]);
+        $this->pdo->query('UNLOCK TABLES');
+        if (!$result) {
             throw new OrderNotFoundException();
         }
         $row = $stmt->fetch();
@@ -104,7 +111,10 @@ VALUES (?, ?, ?, ?, ?, ?)');
         $stmt->bindValue(4, $order->getDate()?->format('Y-m-d'));
         $stmt->bindValue(5, $order->getAgreementCode());
         $stmt->bindValue(6, $order->getAgreementUrl());
-        if (!$stmt->execute()) {
+        $this->pdo->query('LOCK TABLES order WRITE');
+        $result = $stmt->execute();
+        $this->pdo->query('UNLOCK TABLES');
+        if (!$result) {
             throw new DomainRecordCreationFailureException();
         }
         $orderId = intval($this->pdo->lastInsertId());
@@ -114,11 +124,11 @@ VALUES (?, ?, ?, ?, ?, ?)');
 
     public function updateOrder(Order $old, Order $new): Order
     {
-        $this->pdo->beginTransaction();
+        $this->pdo->query('LOCK TABLES order WRITE');
         try {
             $realOld = $this->findOrderById($old->getId(), forUpdate: true);
             if (!$realOld->areSameAttributes($old)) {
-                $this->pdo->rollBack();
+                $this->pdo->query('UNLOCK TABLES');
                 return $realOld;
             }
             $stmt = $this->pdo->prepare('
@@ -132,15 +142,15 @@ WHERE id = ?');
             $stmt->bindValue(5, $new->getAgreementCode());
             $stmt->bindValue(6, $new->getAgreementUrl());
             $stmt->bindValue(7, $old->getId());
-            if (!$stmt->execute()) {
-                $this->pdo->rollBack();
+            $result = $stmt->execute();
+            $this->pdo->query('UNLOCK TABLES');
+            if (!$result) {
                 return $old;
             }
-            $this->pdo->commit();
             $new->setId($old->getId());
             return $new;
         } catch (Exception) {
-            $this->pdo->rollBack();
+            $this->pdo->query('UNLOCK TABLES');
             return $old;
         }
     }
@@ -148,6 +158,9 @@ WHERE id = ?');
     public function deleteOrder(int $orderId): bool
     {
         $stmt = $this->pdo->prepare('DELETE FROM `order` WHERE id = ?');
-        return $stmt->execute([$orderId]);
+        $this->pdo->query('LOCK TABLES order WRITE');
+        $result = $stmt->execute([$orderId]);
+        $this->pdo->query('UNLOCK TABLES');
+        return $result;
     }
 }
