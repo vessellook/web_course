@@ -1,29 +1,26 @@
 <template>
-<div v-show="isShow" class="modal__wrap">
-  <OnClickOutside @trigger="close" class="modal">
-    <div class="modal__content">
-      <slot></slot>
-    </div>
-      <div class="button" @click="close"></div>
-  </OnClickOutside>
-</div>
+  <div class="modal__wrap">
+    <OnClickOutside @trigger="emitClose" class="modal">
+      <div class="modal__content">
+        <slot></slot>
+      </div>
+      <div class="button" @click="emitClose"></div>
+    </OnClickOutside>
+  </div>
 </template>
 
 <script>
 import {OnClickOutside} from '@vueuse/components';
+
 export default {
   name: "BaseModal",
   components: {OnClickOutside},
   emits: ['close'],
-  props: {
-    isShow: {
-      type: Boolean,
-      default: false
-    }
-  },
+  data: () => ({
+  }),
   methods: {
-    close() {
-      if(this.isShow) this.$emit('close');
+    emitClose() {
+      this.$emit('close');
     }
   }
 }
@@ -47,6 +44,7 @@ export default {
 .modal {
   min-width: 300px;
   min-height: 200px;
+  max-height: calc(100% - 160px);
   margin: 145px auto auto;
   position: relative;
   display: flex;
@@ -55,12 +53,17 @@ export default {
   cursor: initial;
 }
 
+.modal__content {
+  overflow-y: auto;
+}
+
 .button {
   position: absolute;
   top: -30px;
   right: -30px;
   cursor: pointer;
   font-size: 30px;
+  overflow-y: auto;
 }
 
 .button:before {

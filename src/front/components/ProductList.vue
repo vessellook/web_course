@@ -7,7 +7,6 @@
 <script>
 import ProductCard from "./ProductCard";
 import Product from "@/models/Product";
-import {ADD_TO_CART} from "@/store/mutations";
 
 export default {
   name: "ProductList",
@@ -24,7 +23,6 @@ export default {
   methods: {
     addToCart(product) {
       if(this.$store.getters.isRegistered) {
-        this.$store.commit(ADD_TO_CART, {product, count: 1});
       } else {
         console.log('x');
         this.$emit('register');

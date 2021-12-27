@@ -11,7 +11,7 @@ let cls = Order;
  * @return {Promise<Order[]>}
  */
 export function getOrders({customerId = null, token}) {
-  let url = (customerId === null) ? orderUrl : `${customerUrl}/${customerId}`
+  let url = (customerId === null) ? orderUrl : `${customerUrl}/${customerId}/orders`
   return getAllEntities({url, token, cls});
 }
 
@@ -32,8 +32,8 @@ export function getOrder({orderId, token}) {
  */
 export function createOrder({customerId, order, token}) {
   return createEntity({
-    url: orderUrl,
-    body: JSON.stringify({customerId, order}),
+    url: `${customerUrl}/${customerId}/orders`,
+    body: JSON.stringify(order),
     token,
     cls
   });

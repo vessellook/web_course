@@ -8,7 +8,7 @@ let cls = Product;
  *
  * @returns {Promise<Product[]>}
  */
-export function getProducts(token) {
+export function getProducts({token}) {
   return getAllEntities({
     url: productUrl,
     token,

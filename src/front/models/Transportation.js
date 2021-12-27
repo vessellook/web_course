@@ -14,13 +14,20 @@ export default class Transportation {
    * @param props
    * @param props.id
    * @param props.orderId
-   * @param {Date} props.plannedDate
-   * @param {Date|null} props.realDate
+   * @param {Date|string} props.plannedDate
+   * @param {Date|string|null} [props.realDate]
    * @param {number} props.number
    * @param {string} props.status
    *
    */
   constructor(props) {
+    Object.assign(this, {realDate: null});
     Object.assign(this, props);
+    if(typeof this.plannedDate === 'string') {
+      this.plannedDate = new Date(this.plannedDate);
+    }
+    if(typeof this.realDate === 'string') {
+      this.realDate = new Date(this.realDate);
+    }
   }
 }

@@ -7,10 +7,13 @@ import {tokenHeader} from "@/api/constants";
  * @returns {Promise<*>}
  */
 export async function parseBody(response) {
-  return (await response.json()).data;
+  if (response.ok) {
+    return (await response.json()).data;
+  }
+  throw new Error();
 }
 
-function tee(target) {
+export function tee(target) {
   if (typeof target === 'function') return realTarget => {
     console.log(target(realTarget));
     return realTarget;

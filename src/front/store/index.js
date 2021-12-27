@@ -1,54 +1,66 @@
 import {createStore} from "vuex";
 import createPersistedState from "vuex-persistedstate";
 import {
-  ADD_TO_CART,
-  HIDE_LOGIN_MODAL,
   INVALIDATE_TOKEN,
-  REMOVE_FROM_CART,
-  SHOW_LOGIN_MODAL,
   UPDATE_TOKEN
 } from './mutations';
+import {RENEW_TOKEN} from './actions';
+import {updateToken} from '@/api';
 import decode from 'jwt-decode';
 
 let store = createStore({
   state() {
     return {
-      cart: {},
       token: null,
       role: null,
-      isLoginModalShown: false,
+      expiresAt: null,
+      finishedLoading: false
     };
   },
   getters: {
-    isRegistered(state) {return Boolean(state.token);}
+    isRegistered(state) {
+      return Boolean(state.token);
+    }
   },
   mutations: {
-    [ADD_TO_CART](state, {product, count}) {
-      if (state.cart.hasOwnProperty(product.id)) {
-        state.cart[product.id].count += count;
-      } else {
-        state.cart[product.id] = {product, count};
-      }
-    },
-    [REMOVE_FROM_CART](state, product) {
-      delete state.cart[product.id];
-    },
     [UPDATE_TOKEN](state, token) {
       let decoded = decode(token);
-      this.state.role = decoded.role;
+      state.role = decoded.role;
       state.token = token;
+      state.expiresAt = new Date(decoded.exp * 1000);
     },
     [INVALIDATE_TOKEN](state) {
       state.token = null;
-    },
-    [SHOW_LOGIN_MODAL](state) {
-      state.isLoginModalShown = true;
-    },
-    [HIDE_LOGIN_MODAL](state) {
-      state.isLoginModalShown = false;
+      state.role = null;
+      state.expiresAt = null;
     },
   },
-  plugins: [createPersistedState({paths: ['cart', 'token', 'role']})]
+  actions: {
+    [RENEW_TOKEN]({state, commit}) {
+      console.log('state on startup: ', state);
+      if (state.token == null) {
+        return;
+      }
+      let now = new Date();
+      if (state.expiresAt > now) {
+        updateToken({token: state.token})
+          .then(
+            token => commit(UPDATE_TOKEN, token),
+            () => commit(INVALIDATE_TOKEN)
+          );
+      }
+      commit(INVALIDATE_TOKEN);
+    }
+  },
+  plugins: [createPersistedState({
+    paths: ['token', 'role', 'expiresAt'],
+    rehydrated(store) {
+      if(store.state.expiresAt) {
+        store.state.expiresAt = new Date(store.state.expiresAt);
+        store.state.finishedLoading = true;
+      }
+    }
+  })]
 });
 
 

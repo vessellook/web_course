@@ -1,45 +1,73 @@
 <template>
   <div id="app">
     <div class="header">
-      <router-link to="/"><img class="logo" src="/static/img/logo.png" alt="На главную" title="logo"></router-link>
+        <img class="logo" src="/static/img/logo2.png" alt="Логотип" title="logo">
       <div class="nav">
-        <router-link class="nav__link" :to="{name: 'ProductCatalog'}">Каталог</router-link>
+        <router-link :to="{name: 'CustomerList'}" class="nav__link" v-if="isRegistered">Заказчики</router-link>
+        <router-link :to="{name: 'OrderList'}" class="nav__link" v-if="isRegistered">Заказы</router-link>
+        <router-link :to="{name: 'TransportationList'}" class="nav__link" v-if="isRegistered">Поставки</router-link>
+        <router-link :to="{name: 'UserList'}" class="nav__link" v-if="isRegistered && role === 'director'">Пользователи</router-link>
+        <router-link :to="{name: 'Profile'}" class="nav__link" v-if="isRegistered">Профиль</router-link>
         <div class="nav__link" v-if="!isRegistered" @click="showModal">Войти</div>
-        <router-link class="nav__link" v-if="isRegistered" :to="{name: 'ShoppingCart'}">В корзину</router-link>
         <div class="nav__link" v-if="isRegistered" @click="logout">Выйти</div>
       </div>
     </div>
     <div class="main">
       <router-view/>
     </div>
-    <base-modal :isShow="isShow" @close="closeModal">
-      <authentication-form @loggedIn="closeModal" @registered="closeModal"></authentication-form>
+    <base-modal v-show="isShow" @close="closeModal">
+      <authentication-form @loggedIn="closeModal"></authentication-form>
     </base-modal>
   </div>
 </template>
 
 <script>
-import {mapGetters, mapMutations, mapState} from 'vuex';
-import {HIDE_LOGIN_MODAL, INVALIDATE_TOKEN, SHOW_LOGIN_MODAL} from "./store/mutations";
+import {mapGetters, mapMutations, mapActions, mapState} from 'vuex';
+import {INVALIDATE_TOKEN} from "./store/mutations";
 import BaseModal from '@/components/BaseModal';
 import AuthenticationForm from "@/components/AuthenticationForm";
+import {RENEW_TOKEN} from "@/store/actions";
 
 export default {
   name: "App",
   components: {BaseModal, AuthenticationForm},
+  data: () => ({
+    isShow: false
+  }),
   computed: {
-    ...mapState({
-      isShow: 'isLoginModalShown'
-    }),
     ...mapGetters({
       isRegistered: 'isRegistered'
     }),
+    ...mapState({
+      finishedLoading: 'finishedLoading',
+      role: 'role'
+    })
   },
-  methods: mapMutations({
-    logout: INVALIDATE_TOKEN,
-    showModal: SHOW_LOGIN_MODAL,
-    closeModal: HIDE_LOGIN_MODAL
-  })
+  watch: {
+    finishedLoading(value) {
+      console.log(1);
+      if(value) {
+        if(this.$store.isRegistered) {
+          this.renewToken();
+        } else {
+          this.$router.replace('/');
+        }
+      }
+    }
+  },
+  methods: {
+    logout() {
+      this.$store.commit(INVALIDATE_TOKEN);
+      this.$router.replace('/');
+    },
+    ...mapActions({renewToken: RENEW_TOKEN}),
+    closeModal() {
+      this.isShow = false;
+    },
+    showModal() {
+      this.isShow = true;
+    }
+  }
 }
 </script>
 
@@ -47,9 +75,8 @@ export default {
 .header {
   display: grid;
   grid-template-columns: 100px 1fr;
-  background: #eee;
   width: 100%;
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid #ccc;
   position: fixed;
   top: 0;
   z-index: 10;
@@ -72,12 +99,12 @@ export default {
 
 .nav__link {
   text-decoration: none;
-  color: green;
+  color: #000;
   cursor: pointer;
 }
 
 .nav__link:hover {
-  color: limegreen;
+  color: #28556C;
   text-decoration: underline;
 }
 
@@ -90,5 +117,10 @@ export default {
 html, body {
   margin: 0;
   padding: 0;
+}
+
+.nav__link.router-link-active {
+  color: #28556C;
+  font-weight: bold;
 }
 </style>

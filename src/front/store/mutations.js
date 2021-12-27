@@ -1,6 +1,2 @@
-export const ADD_TO_CART = 'ADD_TO_CART';
-export const REMOVE_FROM_CART = 'REMOVE_FROM_CART';
 export const UPDATE_TOKEN = 'UPDATE_TOKEN';
 export const INVALIDATE_TOKEN = 'INVALIDATE_TOKEN';
-export const SHOW_LOGIN_MODAL = 'SHOW_LOGIN_MODAL';
-export const HIDE_LOGIN_MODAL = 'HIDE_LOGIN_MODAL';

@@ -1,0 +1,108 @@
+<template>
+  <h1 class="title">Создание заказа</h1>
+  <form class="form">
+    <text-field class="label" label="Заказчик" mandatory>
+      <v-select :options="customers" label="name" v-model="customer"></v-select>
+    </text-field>
+    <text-field class="label" label="Продукт" mandatory>
+      <v-select :options="products" label="name" v-model="product"></v-select>
+    </text-field>
+    <text-field class="label" label="Адрес" v-model="address" mandatory></text-field>
+    <text-field class="label" label="Дата заключения договора">
+      <Datepicker v-model="date" locale="ru" selectText="Выбрать" cancelText="Отмена"
+                  :enableTimePicker="false"></Datepicker>
+    </text-field>
+    <text-field class="label" label="Номер договора" v-model="agreementCode"></text-field>
+    <text-field class="label" label="Ссылка на договор" v-model="agreementUrl"></text-field>
+    <common-button :ready="!!(address && customer && product)" value="Сохранить" @submit="saveData"></common-button>
+  </form>
+</template>
+
+<script>
+import Datepicker from 'vue3-date-time-picker';
+import 'vue3-date-time-picker/dist/main.css'
+import Order from "@/models/Order";
+import TextField from "@/components/TextField";
+import CommonButton from "@/components/CommonButton";
+import {getCustomers} from "@/api/customer";
+import {getProducts} from "@/api/product";
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css';
+import {createOrder} from "@/api/order";
+
+
+export default {
+  name: "CreateOrder",
+  components: {CommonButton, TextField, Datepicker, vSelect},
+  props: {
+    productId: {default: null},
+    customerId: {default: null}
+  },
+  data() {
+    return {
+      address: null,
+      date: null,
+      agreementCode: null,
+      agreementUrl: null,
+      customer: null,
+      product: null,
+      products: [],
+      customers: []
+    }
+  },
+  watch: {
+    customer(value, previousValue) {
+      if (!this.address || (previousValue && this.address === previousValue.address)) {
+        this.address = value ? value.address : null;
+      }
+    }
+  },
+  mounted() {
+    getCustomers({token: this.$store.state.token})
+        .then(customers => this.customers = customers)
+        .then(() => {
+          let findFn = customer => customer.id === +this.customerId;
+          if (this.customerId && this.customers && this.customers.some(findFn)) {
+            this.customer = this.customers.find(findFn);
+          }
+        });
+    getProducts({token: this.$store.state.token})
+        .then(products => this.products = products)
+        .then(() => {
+          if (this.productId && this.products && this.products.some(product => product.id === this.productId)) {
+            this.product = this.products.find(product => product.id === this.productId);
+          }
+        });
+  },
+  methods: {
+    saveData() {
+      let order = new Order({
+        id: null,
+        productId: this.product.id,
+        customerId: this.customer.id,
+        address: this.address,
+        agreementCode: this.agreementCode,
+        agreementUrl: this.agreementUrl,
+        date: this.date
+      });
+      let transportations = createOrder({
+        customerId: this.customer.id,
+        order,
+        token: this.$store.state.token
+      }).then(order => this.$router.replace({name: 'OrderList', params: {id: order.id}}));
+    }
+  }
+}
+</script>
+
+<style scoped>
+.label {
+  margin-bottom: 15px;
+}
+
+.title {
+  font-size: 1.5em;
+  margin-bottom: 15px;
+  color: #28556C;
+}
+</style>

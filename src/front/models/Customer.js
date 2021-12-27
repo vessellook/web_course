@@ -12,8 +12,8 @@ export default class Customer {
    * @param props
    * @param props.id
    * @param {string} props.name
-   * @param {string|null} props.address
-   * @param {string|null} props.phoneNumber
+   * @param {string|null} [props.address]
+   * @param {string|null} [props.phoneNumber]
    *
    */
   constructor(props) {

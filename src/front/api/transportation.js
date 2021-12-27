@@ -11,7 +11,7 @@ let cls = Transportation;
  * @returns {Promise<Transportation[]>}
  */
 export function getTransportations({orderId = null, token}) {
-  let url = (orderId === null) ? transportationUrl : `${orderUrl}/${orderId}`;
+  let url = (orderId === null) ? transportationUrl : `${orderUrl}/${orderId}/transportations`;
   return getAllEntities({url, token, cls});
 }
 
@@ -31,7 +31,7 @@ export function getTransportation({transportationId, token}) {
  */
 export function createTransportation({orderId, transportation, token}) {
   return createEntity({
-    url: `${orderUrl}/${orderId}`,
+    url: `${orderUrl}/${orderId}/transportations`,
     body: JSON.stringify(transportation),
     token,
     cls

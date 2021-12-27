@@ -1,4 +1,4 @@
-import {userUrl} from "@/api/constants";
+import {profileUrl, tokenHeader, userUrl} from "@/api/constants";
 import {createEntity, deleteEntity, getAllEntities, getEntity, updateEntity} from "@/api/common";
 import User from "@/models/User";
 
@@ -12,9 +12,9 @@ export function getUsers(token) {
   });
 }
 
-export function getUser({userId, token}) {
+export function getUser({userId = null, token}) {
   return getEntity({
-    url: `${userUrl}/${userId}`,
+    url: userId ? `${userUrl}/${userId}` : profileUrl,
     token,
     cls
   });
@@ -30,13 +30,17 @@ export function registerUser({user, password, token}) {
   });
 }
 
-export function updateUser({userId, oldUser, newUser, token}) {
-  return updateEntity({
-    url: `${userUrl}/${userId}`,
-    body: JSON.stringify({old: oldUser, new: newUser}),
-    token,
-    cls
-  });
+export function updateUserPassword({userId = null, password, token}) {
+  let url = userId ? `${userUrl}/${userId}` : profileUrl;
+  let options = {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      [tokenHeader]: token
+    },
+    body: JSON.stringify({password})
+  }
+  return fetch(url, options);
 }
 
 export function deleteUser({userId, token}) {

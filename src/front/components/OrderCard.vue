@@ -1,0 +1,108 @@
+<template>
+  <form class="form">
+    <div class="title" v-if="order">{{ 'Заказ № ' + order.id }}</div>
+    <text-field class="label" label="Адрес" v-model="newAddress" mandatory></text-field>
+    <text-field class="label" label="Дата заключения договора">
+      <Datepicker v-model="newDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
+                  :enableTimePicker="false"></Datepicker>
+    </text-field>
+    <text-field class="label" label="Номер договора" v-model="newAgreementCode"></text-field>
+    <text-field class="label" label="Ссылка на договор" v-model="newAgreementUrl"></text-field>
+    <common-button :ready="!!newAddress" value="Сохранить" @submit="saveData"></common-button>
+  </form>
+  <router-link class="link" v-if="order" :to="{name: 'CustomerList', params: {id: order.customerId}}">Перейти к заказчику</router-link>
+  <transportations-of-order v-if="order" :order-id="order.id"></transportations-of-order>
+</template>
+
+<script>
+import Datepicker from 'vue3-date-time-picker';
+import 'vue3-date-time-picker/dist/main.css'
+import Order from "@/models/Order";
+import TextField from "@/components/TextField";
+import CommonButton from "@/components/CommonButton";
+import {updateOrder} from "@/api/order";
+import TransportationsOfOrder from "@/components/TransportationsOfOrder";
+
+export default {
+  name: "OrderCard",
+  components: {CommonButton, TextField, Datepicker, TransportationsOfOrder},
+  props: {
+    order: Order
+  },
+  emits: ['updateOrders'],
+  data() {
+    if (this.order) {
+      return {
+        newAddress: this.order.address,
+        newDate: this.order.date,
+        newAgreementCode: this.order.agreementCode,
+        newAgreementUrl: this.order.agreementUrl
+      }
+    }
+    return {
+      newAddress: null,
+      newDate: null,
+      newAgreementCode: null,
+      newAgreementUrl: null
+    }
+  },
+  watch: {
+    order() {
+      this.newAddress = this.order.address;
+      this.newDate = this.order.date;
+      this.newAgreementCode = this.order.agreementCode;
+      this.newAgreementUrl = this.order.agreementUrl;
+    }
+  },
+  methods: {
+    saveData() {
+      let newOrder = new Order({
+        id: this.order.id,
+        productId: this.order.productId,
+        customerId: this.order.customerId,
+        address: this.newAddress,
+        date: this.newDate,
+        agreementCode: this.newAgreementCode,
+        agreementUrl: this.newAgreementUrl
+      });
+      let partialEmit = order => this.$emit('updateOrders', order);
+      updateOrder({
+        orderId: this.order.id,
+        oldOrder: this.order,
+        newOrder,
+        token: this.$store.state.token
+      }).then(partialEmit, partialEmit);
+    }
+  }
+}
+</script>
+
+<style scoped>
+.form {
+  padding: 5px;
+  margin: 10px;
+  border: 1px solid #ccc;
+  width: 400px;
+}
+
+.label {
+  margin-bottom: 15px;
+}
+
+.title {
+  font-size: 1.5em;
+  margin-bottom: 15px;
+}
+
+.link {
+  display: block;
+  text-align: right;
+  color: #28556C;
+  text-decoration: none;
+  margin: 10px;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+</style>
