@@ -16,6 +16,6 @@ class DummyAction extends Action
      */
     protected function action(): Response
     {
-        return $this->response;
+        return $this->respond(new ActionPayload());
     }
 }

@@ -11,11 +11,12 @@ use App\Domain\Order\OrderRepository;
 use PDO;
 use DateTimeImmutable;
 use Exception;
+use Psr\Log\LoggerInterface;
 
 class PdoOrderRepository implements OrderRepository
 {
 
-    public function __construct(private PDO $pdo)
+    public function __construct(private PDO $pdo, private LoggerInterface $logger)
     {
     }
 

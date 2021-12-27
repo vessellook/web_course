@@ -3,6 +3,7 @@
 namespace App\Application\Middleware;
 
 use App\Application\JwtGenerator\JwtGenerator;
+use Assert\AssertionFailedException;
 use Lcobucci\JWT\Encoding\CannotDecodeContent;
 use Lcobucci\JWT\Token\InvalidTokenStructure;
 use Lcobucci\JWT\Token\UnsupportedHeaderFound;
@@ -33,17 +34,17 @@ class JwtAuthenticationMiddleware implements Middleware
         $sessionToken = $request->getHeader(self::SESSION_TOKEN_NAME)[0];
         try {
             $token = $this->jwtGenerator->parseToken($sessionToken);
-            $this->jwtGenerator->validateToken($token);
-            $userId = $token->headers()->get('userId');
-            $role = $token->headers()->get('role', 'customer');
+            $this->jwtGenerator->assertToken($token);
+            $userId = $token->claims()->get('userId');
+            $role = $token->claims()->get('role', 'customer');
             $host = $request->getUri()->getHost();
             $newToken = $this->jwtGenerator->generateToken($userId, $host, $role);
             return $handler->handle($request
                 ->withAttribute('userId', $userId)
                 ->withAttribute('role', $role))
                 ->withHeader(self::SESSION_TOKEN_NAME, $newToken->toString());
-        } catch (CannotDecodeContent|InvalidTokenStructure|UnsupportedHeaderFound|RequiredConstraintsViolated
-        $exception) {
+        } catch (AssertionFailedException|CannotDecodeContent|InvalidTokenStructure|UnsupportedHeaderFound
+        |RequiredConstraintsViolated $exception) {
             $this->logger->info($exception->getMessage(), ['line' => __LINE__, 'file' => __FILE__]);
             return new \Slim\Psr7\Response(status: 401);
         }

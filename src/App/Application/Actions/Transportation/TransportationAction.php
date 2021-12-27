@@ -25,9 +25,9 @@ abstract class TransportationAction extends Action
             ->keyExists('plannedDate')
             ->keyExists('number')
             ->keyExists('status');
-        Assert::that($params['plannedDate'])->notBlank()->date(DateTimeInterface::ATOM);
+        Assert::that($params['plannedDate'])->notBlank()->date('Y-m-d\TH:i:s.v\Z');
         Assertion::integer($params['number']);
-        Assertion::nullOrDate($params['realDate'], DateTimeInterface::ATOM);
+        Assertion::nullOrDate($params['realDate'], 'Y-m-d\TH:i:s.v\Z');
         Assertion::inArray($params['status'], ['planned', 'finished']);
     }
 
@@ -38,12 +38,12 @@ abstract class TransportationAction extends Action
     {
         $realDate = null;
         if (isset($params['realDate'])) {
-            $realDate = DateTimeImmutable::createFromFormat($params['realDate'], DateTimeInterface::ATOM);
+            $realDate = DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s.v\Z', $params['realDate']);
         }
         return new Transportation(
             id: $id,
             orderId: $orderId,
-            plannedDate: DateTimeImmutable::createFromFormat($params['plannedDate'], DateTimeInterface::ATOM),
+            plannedDate: DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s.v\Z', $params['plannedDate']),
             realDate: $realDate,
             number: $params['number'],
             status: $params['status']

@@ -18,13 +18,16 @@ class RegisterUserAction extends UserAction
         $params = $this->request->getParsedBody();
         try {
             $this->assertParams($params);
+            $this->logger->info(0);
             $user = new User(
                 id: null,
                 role: $params['role'],
                 login: $params['login'],
                 password: $params['password'], // TODO: convert password to hash
             );
+            $this->logger->info(1);
             $user = $this->userRepository->registerNewUser($user);
+            $this->logger->info(2);
             $this->logger->info('user with login "' . $user->getLogin() . '" is registered');
             return $this->respondWithData($user);
         } catch (AssertionFailedException|UserRegistrationFailureException $exception) {

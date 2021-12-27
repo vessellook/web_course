@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Application\JwtGenerator;
 
+use Assert\Assertion;
 use DateInterval;
 use DateTimeImmutable;
 use Lcobucci\JWT\Configuration;
@@ -21,8 +22,8 @@ class JwtGenerator
             ->issuedBy($issuer)
             ->issuedAt($now)
             ->expiresAt($now->add($this->inactivityTimeout))
-            ->withHeader('userId', $userId)
-            ->withHeader('role', $role)
+            ->withClaim('userId', $userId)
+            ->withClaim('role', $role)
             ->getToken(
                 $this->configuration->signer(),
                 $this->configuration->signingKey()
@@ -36,7 +37,14 @@ class JwtGenerator
 
     public function validateToken(Token $token): bool
     {
-        $constraints = $this->configuration->validationConstraints();
-        return $this->configuration->validator()->validate($token, ...$constraints);
+        return !$token->isExpired(new DateTimeImmutable());
+    }
+
+    /**
+     * @throws \Assert\AssertionFailedException
+     */
+    public function assertToken(Token $token): bool
+    {
+        Assertion::true(!$token->isExpired(new DateTimeImmutable()));
     }
 }

@@ -29,7 +29,7 @@ abstract class OrderAction extends Action
         Assertion::integer($params['customerId']);
         Assertion::integer($params['productId']);
         Assertion::notBlank($params['address']);
-        Assertion::nullOrDate($params['date'], DateTimeInterface::ATOM);
+        Assertion::nullOrDate($params['date'], 'Y-m-d\TH:i:s.v\Z');
         Assertion::nullOrString($params['agreementCode']);
         Assertion::nullOrString($params['agreementUrl']);
     }
@@ -38,7 +38,7 @@ abstract class OrderAction extends Action
     {
         $date = null;
         if (isset($params['date'])) {
-            $date = DateTimeImmutable::createFromFormat($params['date'], DateTimeInterface::ATOM);
+            $date = DateTimeImmutable::createFromFormat('Y-m-d\TH:i:s.v\Z', $params['date']);
         }
         return new Order(
             id: $id,

@@ -10,6 +10,7 @@ use App\Domain\Product\ProductRepository;
 use App\Domain\User\UserNotFoundException;
 use App\Domain\User\UserRepository;
 use Assert\Assert;
+use Assert\Assertion;
 use Assert\AssertionFailedException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Log\LoggerInterface;
@@ -37,10 +38,10 @@ class GenerateTokenAction extends Action
             Assert::that($body)->isArray()
                 ->keyExists('login')
                 ->keyExists('password');
-            Assert::that($body['login'])->string()->notBlank();
+            Assertion::notBlank($body['login']);
             $user = $this->userRepository->findUserOfLogin($body['login']);
             // TODO: use password_verify or wrapper around it
-            if ($user->getPasswordHash() !== $body['password']) {
+            if ($user->getPassword() !== $body['password']) {
                 return new \Slim\Psr7\Response(status: 400);
             }
             $host = $this->request->getUri()->getHost();

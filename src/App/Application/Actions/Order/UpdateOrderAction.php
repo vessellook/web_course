@@ -22,6 +22,7 @@ class UpdateOrderAction extends OrderAction
         $orderId = (int)$this->resolveArg('orderId');
         $params = $this->request->getParsedBody();
         try {
+            $this->logger->debug($params['new']['date']);
             Assertion::notBlank($orderId);
             Assert::that($params)->isArray()->keyExists('old')->keyExists('new');
             OrderAction::assertOrder($params['old']);

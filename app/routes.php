@@ -23,6 +23,7 @@ use App\Application\Actions\Transportation\UpdateTransportationAction;
 use App\Application\Actions\Transportation\ViewTransportationAction;
 use App\Application\Actions\User\ListUsersAction;
 use App\Application\Actions\User\RegisterUserAction;
+use App\Application\Actions\User\UpdateUserPasswordAction;
 use App\Application\Actions\User\ViewUserAction;
 use App\Application\Middleware\JwtAuthenticationMiddleware;
 use App\Application\Middleware\RoleBasedAuthorizationMiddleware;
@@ -38,14 +39,16 @@ return function (App $app) {
             $group->get('', ListUsersAction::class);
             $group->post('', RegisterUserAction::class);
             $group->get('/{id}', ViewUserAction::class);
-        });//->add(JwtAuthenticationMiddleware::class)->addMiddleware(new RoleBasedAuthorizationMiddleware(['director']));
+            $group->patch('/{id}', UpdateUserPasswordAction::class);
+        })->addMiddleware(new RoleBasedAuthorizationMiddleware(['director']))->add(JwtAuthenticationMiddleware::class);
 
-        $api->get('/token#update', DummyAction::class)
+        $api->get('/token/update', DummyAction::class)
             ->add(JwtAuthenticationMiddleware::class);
         $api->get('/token[?.*]', GenerateTokenAction::class);
         $api->group('/profile', function (Group $group) {
             $group->get('', ViewUserAction::class);
-        });//->add(JwtAuthenticationMiddleware::class);
+            $group->patch('', UpdateUserPasswordAction::class);
+        })->add(JwtAuthenticationMiddleware::class);
 
         $api->group('/products', function (Group $group) {
             $group->get('', ListProductsAction::class);

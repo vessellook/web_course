@@ -10,6 +10,8 @@ use App\Domain\User\UserRegistrationFailureException;
 use App\Domain\User\UserRepository;
 use Exception;
 use PDO;
+use PDOException;
+use Psr\Log\LoggerInterface;
 
 class PdoUserRepository implements UserRepository
 {
@@ -24,7 +26,7 @@ class PdoUserRepository implements UserRepository
     }
 
 
-    public function __construct(private PDO $pdo)
+    public function __construct(private PDO $pdo, private LoggerInterface $logger)
     {
     }
 
@@ -83,7 +85,11 @@ class PdoUserRepository implements UserRepository
         $stmt->bindValue(1, $user->getRole());
         $stmt->bindValue(2, $user->getLogin());
         $stmt->bindValue(3, $user->getPassword());
-        if (!$stmt->execute()) {
+        try {
+            if (!$stmt->execute()) {
+                throw new UserRegistrationFailureException();
+            }
+        } catch (PDOException) {
             throw new UserRegistrationFailureException();
         }
         $id = intval($this->pdo->lastInsertId());
@@ -100,7 +106,7 @@ class PdoUserRepository implements UserRepository
                 $this->pdo->rollBack();
                 return $realOld;
             }
-            $stmt = $this->pdo->query('UPDATE user SET role = ?, login = ?, password = ? WHERE id = ?');
+            $stmt = $this->pdo->prepare('UPDATE user SET role = ?, login = ?, password = ? WHERE id = ?');
             $stmt->bindValue(1, $new->getRole());
             $stmt->bindValue(2, $new->getLogin());
             $stmt->bindValue(3, $new->getPassword());

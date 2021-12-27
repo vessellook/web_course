@@ -20,7 +20,7 @@ class ListOrdersAction extends OrderAction
     {
         $customerId = $this->args['customerId'] ?? null;
         if (isset($customerId)) {
-            $orders = $this->orderRepository->findAllOfCustomer($customerId);
+            $orders = $this->orderRepository->findAllOfCustomer(intval($customerId));
         } else {
             $orders = $this->orderRepository->findAll();
         }

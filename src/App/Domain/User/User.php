@@ -46,7 +46,7 @@ class User implements JsonSerializable
         $b = $other->jsonSerialize();
         unset($a['id']);
         unset($b['id']);
-        return $a == $b;
+        return $a == $b && $this->password == $other->password;
     }
 
     public function jsonSerialize(): array
