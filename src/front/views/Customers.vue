@@ -6,7 +6,7 @@
     <template v-slot>
       <customer-card :customer="currentCustomer"
                      @update-customers="updateCustomers().finally(closePopup)"></customer-card>
-      <orders-of-customer v-if="id" :customer-id="id"></orders-of-customer>
+      <orders-of-customer v-if="id && id !== 'new'" :customer-id="id"></orders-of-customer>
     </template>
   </base-modal>
 </template>

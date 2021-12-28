@@ -9,8 +9,11 @@
     <text-field class="label" label="Номер договора" v-model="newAgreementCode"></text-field>
     <text-field class="label" label="Ссылка на договор" v-model="newAgreementUrl"></text-field>
     <common-button :ready="!!newAddress" value="Сохранить" @submit="saveData"></common-button>
+    <loading-image v-show="isLoading"></loading-image>
   </form>
-  <router-link class="link" v-if="order" :to="{name: 'CustomerList', params: {id: order.customerId}}">Перейти к заказчику</router-link>
+  <router-link class="link" v-if="order" :to="{name: 'CustomerList', params: {id: order.customerId}}">Перейти к
+    заказчику
+  </router-link>
   <transportations-of-order v-if="order" :transportations="transportations"></transportations-of-order>
 </template>
 
@@ -22,10 +25,11 @@ import TextField from "@/components/TextField";
 import CommonButton from "@/components/CommonButton";
 import {getOrder, getOrderWithTransportations, updateOrder} from "@/api/order";
 import TransportationsOfOrder from "@/components/TransportationsOfOrder";
+import LoadingImage from "@/components/LoadingImage";
 
 export default {
   name: "OrderCard",
-  components: {CommonButton, TextField, Datepicker, TransportationsOfOrder},
+  components: {LoadingImage, CommonButton, TextField, Datepicker, TransportationsOfOrder},
   props: {
     orderId: Number
   },
@@ -37,11 +41,12 @@ export default {
       newAgreementCode: null,
       newAgreementUrl: null,
       order: null,
-      transportations: null
+      transportations: null,
+      isLoading: false
     }
   },
   mounted() {
-    if( this.orderId) {
+    if (this.orderId) {
       getOrderWithTransportations({
         orderId: this.orderId,
         token: this.$store.state.token
@@ -71,12 +76,14 @@ export default {
         agreementUrl: this.newAgreementUrl
       });
       let partialEmit = order => this.$emit('updateOrders', order);
+      this.isLoading = true;
       updateOrder({
         orderId: this.order.id,
         oldOrder: this.order,
         newOrder,
         token: this.$store.state.token
-      }).then(partialEmit, partialEmit);
+      }).then(partialEmit, partialEmit)
+          .finally(() => this.isLoading = false);
     }
   }
 }

@@ -53,19 +53,14 @@ class PdoCustomerRepository implements CustomerRepository
     private function findCustomerById(int $id): Customer
     {
         $stmt = $this->pdo->prepare('SELECT * FROM customer WHERE id = ?');
-        $this->pdo->query('LOCK TABLES customer READ');
-        try {
-            if (!$stmt->execute([$id])) {
-                throw new CustomerNotFoundException();
-            }
-            $row = $stmt->fetch();
-            if (!$row) {
-                throw new CustomerNotFoundException();
-            }
-            return PdoCustomerRepository::convertRowToCustomer($row);
-        } finally {
-            $this->pdo->query('UNLOCK TABLES');
+        if (!$stmt->execute([$id])) {
+            throw new CustomerNotFoundException();
         }
+        $row = $stmt->fetch();
+        if (!$row) {
+            throw new CustomerNotFoundException();
+        }
+        return PdoCustomerRepository::convertRowToCustomer($row);
     }
 
     /**
@@ -73,7 +68,12 @@ class PdoCustomerRepository implements CustomerRepository
      */
     public function findCustomerOfId(int $id): Customer
     {
-        return $this->findCustomerById($id);
+        $this->pdo->query('LOCK TABLES customer READ');
+        try {
+            return $this->findCustomerById($id);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
+        }
     }
 
     /**
@@ -100,12 +100,15 @@ class PdoCustomerRepository implements CustomerRepository
 
     public function updateCustomer(Customer $old, Customer $new): Customer
     {
-        $this->pdo->query('LOCK TABLES customer WRITE');
+        if (isset($_ENV['WITH_LOCK']) && $_ENV['WITH_LOCK'] === 'true') {
+            $this->pdo->query('LOCK TABLES customer WRITE');
+        }
         try {
             $realOld = $this->findCustomerById($old->getId());
             if (!$realOld->areSameAttributes($old)) {
                 return $realOld;
             }
+            sleep(10);
             $stmt = $this->pdo->prepare("
 UPDATE customer SET name = ?, address = ?, phone_number = ? WHERE id = ?");
             $stmt->bindValue(1, $new->getName());
@@ -120,7 +123,9 @@ UPDATE customer SET name = ?, address = ?, phone_number = ? WHERE id = ?");
         } catch (Exception) {
             return $old;
         } finally {
-            $this->pdo->query('UNLOCK TABLES');
+            if (isset($_ENV['WITH_LOCK']) && $_ENV['WITH_LOCK'] === 'true') {
+                $this->pdo->query('UNLOCK TABLES');
+            }
         }
     }
 

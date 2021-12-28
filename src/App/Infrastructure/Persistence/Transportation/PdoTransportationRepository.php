@@ -86,19 +86,14 @@ class PdoTransportationRepository implements TransportationRepository
     private function findTransportationById(int $id): Transportation
     {
         $stmt = $this->pdo->prepare('SELECT * FROM transportation WHERE id = ?');
-        $this->pdo->query('LOCK TABLES transportation READ');
-        try {
-            if (!$stmt->execute([$id])) {
-                throw new DomainRecordNotFoundException();
-            }
-            $row = $stmt->fetch();
-            if (!$row) {
-                throw new DomainRecordNotFoundException();
-            }
-            return self::convertRowToTransportation($row);
-        } finally {
-            $this->pdo->query('UNLOCK TABLES');
+        if (!$stmt->execute([$id])) {
+            throw new DomainRecordNotFoundException();
         }
+        $row = $stmt->fetch();
+        if (!$row) {
+            throw new DomainRecordNotFoundException();
+        }
+        return self::convertRowToTransportation($row);
     }
 
     /**
@@ -107,7 +102,12 @@ class PdoTransportationRepository implements TransportationRepository
      */
     public function findTransportationOfId(int $id): Transportation
     {
-        return $this->findTransportationById($id);
+        $this->pdo->query('LOCK TABLES transportation READ');
+        try {
+            return $this->findTransportationById($id);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
+        }
     }
 
     /**

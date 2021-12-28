@@ -52,17 +52,12 @@ class PdoUserRepository implements UserRepository
     {
         $stmt = $this->pdo->prepare('SELECT * FROM user WHERE id = :id');
         $stmt->bindValue('id', $id);
-        $this->pdo->query('LOCK TABLES user READ');
-        try {
-            $stmt->execute();
-            $row = $stmt->fetch();
-            if (!$row) {
-                throw new UserNotFoundException();
-            }
-            return $this->convertRowToUser($row);
-        } finally {
-            $this->pdo->query('UNLOCK TABLES');
+        $stmt->execute();
+        $row = $stmt->fetch();
+        if (!$row) {
+            throw new UserNotFoundException();
         }
+        return $this->convertRowToUser($row);
     }
 
 
@@ -71,7 +66,12 @@ class PdoUserRepository implements UserRepository
      */
     public function findUserOfId(int $id): User
     {
-        return $this->findUserById($id);
+        $this->pdo->query('LOCK TABLES user READ');
+        try {
+            return $this->findUserById($id);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
+        }
     }
 
     /**

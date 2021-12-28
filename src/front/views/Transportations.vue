@@ -9,7 +9,7 @@
 
 <script>
 import CommonList from "@/components/CommonList";
-import {getTransportations, updateTransportation} from "@/api/transportation";
+import {getTransportations} from "@/api/transportation";
 import BaseModal from "@/components/BaseModal";
 import TransportationCard from "@/components/TransportationCard";
 import {BadStatusError} from "@/api/common";
@@ -59,12 +59,6 @@ export default {
       this.$router.push({name: 'TransportationList', params: {id: transportation.id}});
     },
     updateTransportation(oldTransportation, newTransportation) {
-      updateTransportation({
-        transportationId: oldTransportation.id,
-        oldTransportation,
-        newTransportation,
-        token: this.$store.state.token
-      });
       this.updateTransportations().finally(this.closePopup);
     },
     updateTransportations() {

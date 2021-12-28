@@ -85,19 +85,14 @@ class PdoOrderRepository implements OrderRepository
     private function findOrderById(int $id): Order
     {
         $stmt = $this->pdo->prepare('SELECT * FROM `order` WHERE id = ?');
-        $this->pdo->query('LOCK TABLES `order` READ');
-        try {
-            if (!$stmt->execute([$id])) {
-                throw new OrderNotFoundException();
-            }
-            $row = $stmt->fetch();
-            if (!$row) {
-                throw new OrderNotFoundException();
-            }
-            return self::convertRowToOrder($row);
-        } finally {
-            $this->pdo->query('UNLOCK TABLES');
+        if (!$stmt->execute([$id])) {
+            throw new OrderNotFoundException();
         }
+        $row = $stmt->fetch();
+        if (!$row) {
+            throw new OrderNotFoundException();
+        }
+        return self::convertRowToOrder($row);
     }
 
     /**
@@ -105,7 +100,12 @@ class PdoOrderRepository implements OrderRepository
      */
     public function findOrderOfId(int $id): Order
     {
-        return $this->findOrderById($id);
+        $this->pdo->query('LOCK TABLES `order` READ');
+        try {
+            return $this->findOrderById($id);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
+        }
     }
 
     /**

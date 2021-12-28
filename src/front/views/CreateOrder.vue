@@ -26,9 +26,6 @@
                     :enableTimePicker="false"></Datepicker>
       </text-field>
       <text-field class="label" label="Количество товаров" v-model="transportation.number" mandatory></text-field>
-      <text-field class="label" label="Текущее состояние поставки" mandatory>
-        <v-select :options="statuses" v-model="transportation.status" :clearable="false" :reduce="result => result.id"></v-select>
-      </text-field>
     </form>
   </template>
   <div style="margin-bottom: 10px">
@@ -70,8 +67,7 @@ export default {
       product: null,
       products: [],
       customers: [],
-      transportations: [],
-      statuses: [{id: 'planned', label: 'Запланирована'}, {id: 'finished', label: 'Завершена'}]
+      transportations: []
     }
   },
   watch: {
@@ -120,7 +116,11 @@ export default {
         order,
         token: this.$store.state.token,
         transportations: this.transportations.filter(transportation => transportation.number && transportation.status && transportation.plannedDate)
-          .map(transportation => {transportation.number = +transportation.number; return transportation})
+          .map(transportation => {
+            transportation.number = +transportation.number;
+            transportation.status = transportation.realDate ? 'finished' : 'planned';
+            return transportation
+          })
       }).then(order => this.$router.replace({name: 'OrderList', params: {id: order.id}}));
     },
     addTransportation() {

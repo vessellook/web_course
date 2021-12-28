@@ -10,11 +10,9 @@
                   :enableTimePicker="false"></Datepicker>
     </text-field>
     <text-field class="label" label="Количество товаров" v-model="newNumber" mandatory></text-field>
-    <text-field class="label" label="Текущее состояние поставки" mandatory>
-      <v-select :options="statuses" v-model="newStatus" :clearable="false"></v-select>
-    </text-field>
     <common-button :ready="!!(newStatus && newPlannedDate && newNumber && (newStatus !== 'finished' || newRealDate))" value="Сохранить"
                    @submit="saveData"></common-button>
+    <loading-image v-show="isLoading"></loading-image>
   </form>
   <router-link class="link" v-if="transportation" :to="{name: 'OrderList', params: {id: transportation.orderId}}">
     {{ 'Перейти к заказу № ' +  transportation.orderId}}</router-link>
@@ -27,10 +25,11 @@ import TextField from "@/components/TextField";
 import Datepicker from "vue3-date-time-picker";
 import CommonButton from "@/components/CommonButton";
 import vSelect from "vue-select";
+import LoadingImage from "@/components/LoadingImage";
 
 export default {
   name: "TransportationCard",
-  components: {TextField, Datepicker, CommonButton, vSelect},
+  components: {TextField, Datepicker, CommonButton, vSelect, LoadingImage},
   props: {
     transportation: Transportation
   },
@@ -40,29 +39,30 @@ export default {
       newPlannedDate: null,
       newRealDate: null,
       newNumber: null,
-      newStatus: null,
-      statuses: [
-        {id: 'planned', label: 'Запланирована'},
-        {id: 'finished', label: 'Завершена'}
-      ]
+      isLoading: false
     };
     if (this.transportation) {
       Object.assign(data, {
         newPlannedDate: this.transportation.plannedDate,
         newRealDate: this.transportation.realDate,
         newNumber: '' + this.transportation.number,
-        newStatus: data.statuses.find(status => status.id === this.transportation.status),
+        isLoading: false,
       });
     }
     return data;
+  },
+  computed: {
+    newStatus() {
+      return this.transportation?.realDate ? 'finished' : 'planned';
+    }
   },
   watch: {
     transportation() {
       this.newPlannedDate = this.transportation.plannedDate;
       this.newRealDate = this.transportation.realDate;
       this.newNumber = '' + this.transportation.number;
-      this.newStatus = this.statuses.find(status => status.id === this.transportation.status);
-    }
+      this.isLoading = false;
+    },
   },
   methods: {
     saveData() {
@@ -72,9 +72,18 @@ export default {
         plannedDate: this.newPlannedDate,
         realDate: this.newRealDate,
         number: +this.newNumber,
-        status: this.newStatus.id
+        status: this.newStatus
       });
-      this.$emit('updateTransportation', newTransportation);
+      let partialEmit = transportation => this.$emit('updateTransportation', transportation);
+      this.isLoading = true;
+      updateTransportation({
+        transportationId: this.transportation.id,
+        oldTransportation: this.transportation,
+        newTransportation,
+        token: this.$store.state.token
+      }).then(partialEmit, partialEmit)
+      .finally(() => this.isLoading = false);
+
     }
 
   }

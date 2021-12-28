@@ -5,6 +5,7 @@
     <text-field class="label" label="Номер телефона" v-model="newPhoneNumber"></text-field>
     <common-button :ready="!!newName" value="Сохранить"
                    @submit="saveData"></common-button>
+    <loading-image v-show="isLoading"></loading-image>
   </form>
 </template>
 
@@ -13,10 +14,11 @@ import CommonButton from "@/components/CommonButton";
 import {createCustomer, updateCustomer} from "@/api/customer";
 import Customer from "@/models/Customer";
 import TextField from "@/components/TextField";
+import LoadingImage from "@/components/LoadingImage";
 
 export default {
   name: "CustomerCard",
-  components: {TextField, CommonButton},
+  components: {LoadingImage, TextField, CommonButton},
   props: {
     customer: Customer
   },
@@ -26,13 +28,15 @@ export default {
       return {
         newName: this.customer.name,
         newAddress: this.customer.address,
-        newPhoneNumber: this.customer.phoneNumber
+        newPhoneNumber: this.customer.phoneNumber,
+        isLoading: false
       }
     }
     return {
       newName: '',
       newAddress: '',
-      newPhoneNumber: ''
+      newPhoneNumber: '',
+      isLoading: false
     }
   },
   watch: {
@@ -40,6 +44,7 @@ export default {
       this.newName = this.customer.name;
       this.newAddress = this.customer.address;
       this.newPhoneNumber = this.customer.phoneNumber;
+      this.isLoading = false;
     }
   },
   methods: {
@@ -52,19 +57,19 @@ export default {
       });
 
       let partialEmit = customer => this.$emit('updateCustomers', customer);
-
+      this.isLoading = true;
       if (this.customer.id) {
         updateCustomer({
           customerId: this.customer.id,
           oldCustomer: this.customer,
           newCustomer,
           token: this.$store.state.token
-        }).then(partialEmit, partialEmit);
+        }).then(partialEmit, partialEmit).finally(() => this.isLoading = false);
       } else {
         createCustomer({
           customer: newCustomer,
           token: this.$store.state.token
-        }).then(partialEmit);
+        }).then(partialEmit).finally(() => this.isLoading = false);
       }
     }
   }
