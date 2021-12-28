@@ -1,7 +1,7 @@
 <template>
   <div class="transportations">
-    <div class="title" v-show="transportations.length > 0">Список поставок</div>
-    <common-list :propsArray="propsArray" @clicked="switchToTransportation(transportations[$event])"></common-list>
+    <div class="title" v-show="transportationsReal.length > 0">Список поставок</div>
+    <common-list :propsArray="propsArray" @clicked="switchToTransportation(transportationsReal[$event])"></common-list>
     <form class="form" v-show="isNewTransportation">
       <div class="title">Новая поставка</div>
       <text-field class="label" label="Запланированная дата поставки" mandatory>
@@ -37,7 +37,7 @@ export default {
   name: "TransportationsOfOrder",
   components: {CommonList, CommonButton, TextField, Datepicker, vSelect},
   props: {
-    orderId: {
+    transportations: {
       required: true
     }
   },
@@ -47,7 +47,7 @@ export default {
       {id: 'finished', label: 'Завершена'}
     ];
     return {
-      transportations: [],
+      transportationsReal: this.transportations,
       isNewTransportation: false,
       plannedDate: null,
       realDate: null,
@@ -58,17 +58,16 @@ export default {
   },
   computed: {
     propsArray() {
-      return this.transportations.map((transportation, index) => ({
+      return this.transportationsReal.map((transportation, index) => ({
         key: index,
         label: 'Поставка № ' + transportation.id
       }));
     }
   },
-  mounted() {
-    getTransportations({
-      orderId: this.orderId,
-      token: this.$store.state.token
-    }).then(transportations => this.transportations = transportations);
+  watch: {
+    transportations() {
+      this.transportationsReal = this.transportations;
+    }
   },
   methods: {
     switchToTransportation(transportation) {
@@ -91,7 +90,7 @@ export default {
         transportation,
         token: this.$store.state.token
       }).then(transportation => {
-        this.transportations.push(transportation);
+        this.transportationsReal.push(transportation);
         this.isNewTransportation = false;
       })
     }

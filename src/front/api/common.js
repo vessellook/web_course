@@ -1,6 +1,13 @@
 import {tokenHeader} from "@/api/constants";
 
 
+export class BadStatusError extends Error {
+  constructor(status) {
+    super('Bad status: ' + status);
+    this.status = status;
+  }
+}
+
 /**
  *
  * @param {Response} response
@@ -10,7 +17,9 @@ export async function parseBody(response) {
   if (response.ok) {
     return (await response.json()).data;
   }
-  throw new Error();
+  throw await response.json()
+    .then(json => new BadStatusError(response.status, json.data))
+    .catch(() => new BadStatusError(response.status));
 }
 
 export function tee(target) {

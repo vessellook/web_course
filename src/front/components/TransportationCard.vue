@@ -34,7 +34,7 @@ export default {
   props: {
     transportation: Transportation
   },
-  emits: ['updateTransportations'],
+  emits: ['updateTransportation'],
   data() {
     let data = {
       newPlannedDate: null,
@@ -74,13 +74,7 @@ export default {
         number: +this.newNumber,
         status: this.newStatus.id
       });
-      let partialEmit = transportation => this.$emit('updateTransportations', transportation);
-      updateTransportation({
-        transportationId: this.transportation.id,
-        oldTransportation: this.transportation,
-        newTransportation,
-        token: this.$store.state.token
-      }).then(partialEmit, partialEmit);
+      this.$emit('updateTransportation', newTransportation);
     }
 
   }

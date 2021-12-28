@@ -35,13 +35,16 @@ class PdoCustomerRepository implements CustomerRepository
     public function findAll(): array
     {
         $this->pdo->query('LOCK TABLES customer READ');
-        $stmt = $this->pdo->query('SELECT * FROM customer');
-        $this->pdo->query('UNLOCK TABLES');
-        $rows = $stmt->fetchAll();
-        if (!$rows) {
-            return [];
+        try {
+            $stmt = $this->pdo->query('SELECT * FROM customer');
+            $rows = $stmt->fetchAll();
+            if (!$rows) {
+                return [];
+            }
+            return array_map(fn($row) => PdoCustomerRepository::convertRowToCustomer($row), $rows);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
         }
-        return array_map(fn($row) => PdoCustomerRepository::convertRowToCustomer($row), $rows);
     }
 
     /**
@@ -51,16 +54,18 @@ class PdoCustomerRepository implements CustomerRepository
     {
         $stmt = $this->pdo->prepare('SELECT * FROM customer WHERE id = ?');
         $this->pdo->query('LOCK TABLES customer READ');
-        $result = $stmt->execute([$id]);
-        $this->pdo->query('UNLOCK TABLES');
-        if (!$result) {
-            throw new CustomerNotFoundException();
+        try {
+            if (!$stmt->execute([$id])) {
+                throw new CustomerNotFoundException();
+            }
+            $row = $stmt->fetch();
+            if (!$row) {
+                throw new CustomerNotFoundException();
+            }
+            return PdoCustomerRepository::convertRowToCustomer($row);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
         }
-        $row = $stmt->fetch();
-        if (!$row) {
-            throw new CustomerNotFoundException();
-        }
-        return PdoCustomerRepository::convertRowToCustomer($row);
     }
 
     /**
@@ -81,14 +86,16 @@ class PdoCustomerRepository implements CustomerRepository
         $stmt->bindValue(2, $customer->getAddress());
         $stmt->bindValue(3, $customer->getPhoneNumber());
         $this->pdo->query('LOCK TABLES customer WRITE');
-        $result = $stmt->execute();
-        $this->pdo->query('UNLOCK TABLES');
-        if (!$result) {
-            throw new CustomerCanNotBeCreated();
+        try {
+            if (!$stmt->execute()) {
+                throw new CustomerCanNotBeCreated();
+            }
+            $id = intval($this->pdo->lastInsertId());
+            $customer->setId($id);
+            return $customer;
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
         }
-        $id = intval($this->pdo->lastInsertId());
-        $customer->setId($id);
-        return $customer;
     }
 
     public function updateCustomer(Customer $old, Customer $new): Customer
@@ -97,7 +104,6 @@ class PdoCustomerRepository implements CustomerRepository
         try {
             $realOld = $this->findCustomerById($old->getId());
             if (!$realOld->areSameAttributes($old)) {
-                $this->pdo->query('UNLOCK TABLES');
                 return $realOld;
             }
             $stmt = $this->pdo->prepare("
@@ -106,16 +112,15 @@ UPDATE customer SET name = ?, address = ?, phone_number = ? WHERE id = ?");
             $stmt->bindValue(2, $new->getAddress());
             $stmt->bindValue(3, $new->getPhoneNumber());
             $stmt->bindValue(4, $old->getId());
-            $result = $stmt->execute();
-            $this->pdo->query('UNLOCK TABLES');
-            if (!$result) {
+            if (!$stmt->execute()) {
                 return $old;
             }
             $new->setId($old->getId());
             return $new;
         } catch (Exception) {
-            $this->pdo->query('UNLOCK TABLES');
             return $old;
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
         }
     }
 
@@ -123,8 +128,10 @@ UPDATE customer SET name = ?, address = ?, phone_number = ? WHERE id = ?");
     {
         $stmt = $this->pdo->prepare('DELETE FROM customer WHERE id = ?');
         $this->pdo->query('LOCK TABLES customer WRITE');
-        $result = $stmt->execute([$customerId]);
-        $this->pdo->query('UNLOCK TABLES');
-        return $result;
+        try {
+            return $stmt->execute([$customerId]);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
+        }
     }
 }

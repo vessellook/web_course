@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Order;
 
 use JsonSerializable;
-use \DateTimeImmutable;
+use DateTimeImmutable;
 
 class Order implements JsonSerializable
 {
@@ -17,9 +17,9 @@ class Order implements JsonSerializable
         private string             $address,
         private ?DateTimeImmutable $date,
         private ?string            $agreementCode,
-        private ?string            $agreementUrl
-    )
-    {
+        private ?string            $agreementUrl,
+        private ?array             $transportations = null
+    ) {
     }
 
     public function getId(): ?int
@@ -73,7 +73,7 @@ class Order implements JsonSerializable
 
     public function jsonSerialize(): array
     {
-        return [
+        $result = [
             'id' => $this->id,
             'customerId' => $this->customerId,
             'productId' => $this->productId,
@@ -82,5 +82,9 @@ class Order implements JsonSerializable
             'agreementCode' => $this->agreementCode,
             'agreementUrl' => $this->agreementUrl
         ];
+        if (isset($this->transportations)) {
+            $result['transportations'] = $this->transportations;
+        }
+        return $result;
     }
 }

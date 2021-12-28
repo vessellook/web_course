@@ -4,7 +4,8 @@
   <common-button value="Добавить заказчика" @submit="openPopupForNewCustomer"></common-button>
   <base-modal v-if="currentCustomer" @close="closePopup">
     <template v-slot>
-      <customer-card :customer="currentCustomer" @update-customers="updateCustomers"></customer-card>
+      <customer-card :customer="currentCustomer"
+                     @update-customers="updateCustomers().finally(closePopup)"></customer-card>
       <orders-of-customer v-if="id" :customer-id="id"></orders-of-customer>
     </template>
   </base-modal>
@@ -18,6 +19,9 @@ import OrdersOfCustomer from "@/components/OrdersOfCustomer";
 import CommonList from "@/components/CommonList";
 import CommonButton from "@/components/CommonButton";
 import Customer from '@/models/Customer';
+import {BadStatusError} from "@/api/common";
+import {INVALIDATE_TOKEN} from "@/store/mutations";
+import {mapState} from "vuex";
 
 export default {
   name: "Customers",
@@ -33,6 +37,10 @@ export default {
     }
   },
   computed: {
+    ...mapState({
+      finishedLoading: 'finishedLoading',
+      role: 'role'
+    }),
     propsArray() {
       return this.customers.map((customer, index) => ({
         key: index,
@@ -54,9 +62,17 @@ export default {
       }
     }
   },
+  watch: {
+    finishedLoading(value) {
+      if (value) {
+        this.updateCustomers();
+      }
+    }
+  },
   mounted() {
-    getCustomers({token: this.$store.state.token})
-        .then(customers => this.customers = customers);
+    if(this.finishedLoading) {
+      this.updateCustomers();
+    }
   },
   methods: {
     closePopup() {
@@ -71,9 +87,14 @@ export default {
       this.$router.push({name: 'CustomerList', params: {id: 'new'}});
     },
     updateCustomers() {
-      getCustomers({token: this.$store.state.token})
+      return getCustomers({token: this.$store.state.token})
           .then(customers => this.customers = customers)
-          .finally(this.closePopup);
+          .catch(error => {
+            if(error instanceof BadStatusError && error.status === 401) {
+              this.$store.commit(INVALIDATE_TOKEN);
+              this.$router.replace('/');
+            }
+          });
     }
   }
 }

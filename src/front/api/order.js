@@ -1,6 +1,6 @@
 import {customerUrl, orderUrl} from "@/api/constants";
 import Order from "@/models/Order";
-import {createEntity, deleteEntity, getAllEntities, updateEntity} from "@/api/common";
+import {createEntity, deleteEntity, getAllEntities, getEntity, updateEntity} from "@/api/common";
 
 let cls = Order;
 
@@ -15,12 +15,17 @@ export function getOrders({customerId = null, token}) {
   return getAllEntities({url, token, cls});
 }
 
-export function getOrder({orderId, token}) {
+export function getOrderWithTransportations({orderId, token}) {
   return getEntity({
     url: `${orderUrl}/${orderId}`,
     token,
     cls: Order
-  })
+  });
+}
+
+export function getOrder({orderId, token}) {
+  return getOrderWithTransportations({orderId, token})
+    .then(obj => obj.order);
 }
 
 /**
@@ -28,12 +33,13 @@ export function getOrder({orderId, token}) {
  * @param customerId
  * @param {Order} order
  * @param token
+ * @param {Transportation[]} transportations
  * @returns {Promise<Order>}
  */
-export function createOrder({customerId, order, token}) {
+export function createOrder({customerId, order, token, transportations = []}) {
   return createEntity({
     url: `${customerUrl}/${customerId}/orders`,
-    body: JSON.stringify(order),
+    body: JSON.stringify({order, transportations}),
     token,
     cls
   });

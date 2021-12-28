@@ -32,7 +32,7 @@ DROP TABLE IF EXISTS transportation;
 CREATE TABLE transportation
 (
     id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    order_id     INT UNSIGNED                 NOT NULL REFERENCES `order` (id),
+    order_id     INT UNSIGNED                 NOT NULL REFERENCES `order` (id) ON DELETE CASCADE,
     planned_date DATE                         NOT NULL,
     real_date    DATE DEFAULT NULL,
     number       INT UNSIGNED                 NOT NULL,

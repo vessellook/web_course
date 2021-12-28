@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Application\JwtGenerator;
 
 use Assert\Assertion;
+use Assert\AssertionFailedException;
 use DateInterval;
 use DateTimeImmutable;
 use Lcobucci\JWT\Configuration;
@@ -41,10 +42,10 @@ class JwtGenerator
     }
 
     /**
-     * @throws \Assert\AssertionFailedException
+     * @throws AssertionFailedException
      */
     public function assertToken(Token $token): bool
     {
-        Assertion::true(!$token->isExpired(new DateTimeImmutable()));
+        return Assertion::true(!$token->isExpired(new DateTimeImmutable()));
     }
 }

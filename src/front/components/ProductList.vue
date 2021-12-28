@@ -24,7 +24,6 @@ export default {
     addToCart(product) {
       if(this.$store.getters.isRegistered) {
       } else {
-        console.log('x');
         this.$emit('register');
       }
     }

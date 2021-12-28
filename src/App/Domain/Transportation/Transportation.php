@@ -17,7 +17,7 @@ class Transportation implements JsonSerializable
      */
     public function __construct(
         private ?int               $id,
-        private int               $orderId,
+        private ?int               $orderId,
         private DateTimeImmutable $plannedDate,
         private ?DateTimeImmutable $realDate,
         private int               $number,
@@ -45,9 +45,9 @@ class Transportation implements JsonSerializable
     }
 
     /**
-     * @return int
+     * @return int|null $orderId
      */
-    public function getOrderId(): int
+    public function getOrderId(): ?int
     {
         return $this->orderId;
     }

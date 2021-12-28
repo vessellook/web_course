@@ -11,7 +11,7 @@
     <common-button :ready="!!newAddress" value="Сохранить" @submit="saveData"></common-button>
   </form>
   <router-link class="link" v-if="order" :to="{name: 'CustomerList', params: {id: order.customerId}}">Перейти к заказчику</router-link>
-  <transportations-of-order v-if="order" :order-id="order.id"></transportations-of-order>
+  <transportations-of-order v-if="order" :transportations="transportations"></transportations-of-order>
 </template>
 
 <script>
@@ -20,30 +20,35 @@ import 'vue3-date-time-picker/dist/main.css'
 import Order from "@/models/Order";
 import TextField from "@/components/TextField";
 import CommonButton from "@/components/CommonButton";
-import {updateOrder} from "@/api/order";
+import {getOrder, getOrderWithTransportations, updateOrder} from "@/api/order";
 import TransportationsOfOrder from "@/components/TransportationsOfOrder";
 
 export default {
   name: "OrderCard",
   components: {CommonButton, TextField, Datepicker, TransportationsOfOrder},
   props: {
-    order: Order
+    orderId: Number
   },
   emits: ['updateOrders'],
   data() {
-    if (this.order) {
-      return {
-        newAddress: this.order.address,
-        newDate: this.order.date,
-        newAgreementCode: this.order.agreementCode,
-        newAgreementUrl: this.order.agreementUrl
-      }
-    }
     return {
       newAddress: null,
       newDate: null,
       newAgreementCode: null,
-      newAgreementUrl: null
+      newAgreementUrl: null,
+      order: null,
+      transportations: null
+    }
+  },
+  mounted() {
+    if( this.orderId) {
+      getOrderWithTransportations({
+        orderId: this.orderId,
+        token: this.$store.state.token
+      }).then(arr => {
+        this.order = arr.order;
+        this.transportations = arr.transportations;
+      });
     }
   },
   watch: {

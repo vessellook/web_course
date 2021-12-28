@@ -8,6 +8,8 @@
 import TextField from "@/components/TextField";
 import CommonButton from "@/components/CommonButton";
 import {getUser, updateUserPassword} from "@/api/user";
+import {BadStatusError} from "@/api/common";
+import {INVALIDATE_TOKEN} from "@/store/mutations";
 
 export default {
   name: "Profile",
@@ -28,7 +30,13 @@ export default {
       updateUserPassword({
         password: this.password,
         token: this.$store.state.token
-      }).then(partialEmit, partialEmit);
+      }).then(partialEmit, partialEmit)
+          .catch(error => {
+            if(error instanceof BadStatusError) {
+              this.$store.commit(INVALIDATE_TOKEN);
+              this.$router.replace('/');
+            }
+          });
     }
   }
 }

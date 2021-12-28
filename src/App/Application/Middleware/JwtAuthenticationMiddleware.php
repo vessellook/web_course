@@ -34,7 +34,9 @@ class JwtAuthenticationMiddleware implements Middleware
         $sessionToken = $request->getHeader(self::SESSION_TOKEN_NAME)[0];
         try {
             $token = $this->jwtGenerator->parseToken($sessionToken);
+            $this->logger->info('token parsing succeeded');
             $this->jwtGenerator->assertToken($token);
+            $this->logger->info('token assertion succeeded');
             $userId = $token->claims()->get('userId');
             $role = $token->claims()->get('role', 'customer');
             $host = $request->getUri()->getHost();

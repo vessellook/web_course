@@ -34,13 +34,16 @@ class PdoProductRepository implements ProductRepository
     public function findAll(): array
     {
         $this->pdo->query('LOCK TABLES product READ');
-        $stmt = $this->pdo->query('SELECT * FROM product');
-        $this->pdo->query('UNLOCK TABLES');
-        if (!$stmt) {
-            $this->logger->error('error in statement', ['line' => __LINE__, 'file' => __FILE__]);
-            return [];
+        try {
+            $stmt = $this->pdo->query('SELECT * FROM product');
+            if (!$stmt) {
+                $this->logger->error('error in statement', ['line' => __LINE__, 'file' => __FILE__]);
+                return [];
+            }
+            return array_map('self::convertRowToProduct', $stmt->fetchAll());
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
         }
-        return array_map('self::convertRowToProduct', $stmt->fetchAll());
     }
 
     /**
@@ -49,14 +52,17 @@ class PdoProductRepository implements ProductRepository
     private function findProductById(int $id): Product
     {
         $this->pdo->query('LOCK TABLES product READ');
-        $stmt = $this->pdo->query("SELECT * FROM product WHERE id = $id");
-        $this->pdo->query('UNLOCK TABLES');
-        if (!$stmt) {
-            $this->logger->error('error in statement', ['line' => __LINE__, 'file' => __FILE__]);
-            throw new ProductNotFoundException();
+        try {
+            $stmt = $this->pdo->query("SELECT * FROM product WHERE id = $id");
+            if (!$stmt) {
+                $this->logger->error('error in statement', ['line' => __LINE__, 'file' => __FILE__]);
+                throw new ProductNotFoundException();
+            }
+            $row = $stmt->fetch();
+            return PdoProductRepository::convertRowToProduct($row);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
         }
-        $row = $stmt->fetch();
-        return PdoProductRepository::convertRowToProduct($row);
     }
 
     /**
@@ -74,17 +80,19 @@ class PdoProductRepository implements ProductRepository
     {
         $stmt = $this->pdo->prepare("SELECT * FROM product WHERE uid = ?");
         $this->pdo->query('LOCK TABLES product READ');
-        $result = $stmt->execute([$uid]);
-        $this->pdo->query('UNLOCK TABLES');
-        if (!$result) {
-            $this->logger->error(
-                'error in statement ' . $stmt->queryString,
-                ['line' => __LINE__, 'file' => __FILE__]
-            );
-            throw new ProductNotFoundException();
+        try {
+            if (!$stmt->execute([$uid])) {
+                $this->logger->error(
+                    'error in statement ' . $stmt->queryString,
+                    ['line' => __LINE__, 'file' => __FILE__]
+                );
+                throw new ProductNotFoundException();
+            }
+            $row = $stmt->fetch();
+            return PdoProductRepository::convertRowToProduct($row);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
         }
-        $row = $stmt->fetch();
-        return PdoProductRepository::convertRowToProduct($row);
     }
 
     public function createProduct(Product $product): Product
@@ -95,15 +103,17 @@ class PdoProductRepository implements ProductRepository
         $stmt->bindValue('name', $product->getName());
         $stmt->bindValue('price', $product->getPrice());
         $this->pdo->query('LOCK TABLES product WRITE');
-        $result = $stmt->execute();
-        $this->pdo->query('UNLOCK TABLES');
-        if (!$result) {
-            throw new ProductCreationFailureException();
+        try {
+            if (!$stmt->execute()) {
+                throw new ProductCreationFailureException();
+            }
+            $id = intval($this->pdo->lastInsertId());
+            $stmt = $this->pdo->query("SELECT * FROM product WHERE id = $id");
+            $row = $stmt->fetch();
+            return PdoProductRepository::convertRowToProduct($row);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
         }
-        $id = intval($this->pdo->lastInsertId());
-        $stmt = $this->pdo->query("SELECT * FROM product WHERE id = $id");
-        $row = $stmt->fetch();
-        return PdoProductRepository::convertRowToProduct($row);
     }
 
     public function updateProduct(Product $old, Product $new): Product
@@ -112,7 +122,6 @@ class PdoProductRepository implements ProductRepository
         try {
             $realOld = $this->findProductById($old->getId());
             if (!$realOld->areSameAttributes($old)) {
-                $this->pdo->query('UNLOCK TABLES');
                 return $realOld;
             }
             $stmt = $this->pdo->query('UPDATE product SET uid = ?, name = ?, price = ? WHERE id = ?');
@@ -120,16 +129,15 @@ class PdoProductRepository implements ProductRepository
             $stmt->bindValue(2, $new->getName());
             $stmt->bindValue(3, $new->getPrice());
             $stmt->bindValue(3, $old->getId());
-            $result = $stmt->execute();
-            $this->pdo->query('UNLOCK TABLES');
-            if (!$result) {
+            if (!$stmt->execute()) {
                 return $old;
             }
             $new->setId($old->getId());
             return $new;
         } catch (Exception) {
-            $this->pdo->query('UNLOCK TABLES');
             return $old;
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
         }
     }
 
@@ -137,8 +145,10 @@ class PdoProductRepository implements ProductRepository
     {
         $stmt = $this->pdo->prepare('DELETE FROM product WHERE id = ?');
         $this->pdo->query('LOCK TABLES product WRITE');
-        $result = $stmt->execute([$product->getId()]);
-        $this->pdo->query('UNLOCK TABLES');
-        return $result;
+        try {
+            return  $stmt->execute([$product->getId()]);
+        } finally {
+            $this->pdo->query('UNLOCK TABLES');
+        }
     }
 }

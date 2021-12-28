@@ -19,8 +19,8 @@ class ViewOrderAction extends OrderAction
     {
         $orderId = (int)$this->resolveArg('orderId');
         try {
-            $order = $this->orderRepository->findOrderOfId($orderId);
-            return $this->respondWithData($order);
+            $result = $this->orderRepository->findOrderWithTransportationsOfId($orderId);
+            return $this->respondWithData($result);
         } catch (OrderNotFoundException $e) {
             $this->logger->info($e->getMessage());
             $error = new ActionError($e::class, $e->getMessage());
