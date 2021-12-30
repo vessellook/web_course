@@ -8,6 +8,9 @@
     </text-field>
     <text-field class="label" label="Номер договора" v-model="newAgreementCode"></text-field>
     <text-field class="label" label="Ссылка на договор" v-model="newAgreementUrl"></text-field>
+    <div class="conflict-message" v-show="isConflictHappened">
+      Информация не сохранена. Другой пользователь внёс изменения. Обновите страницу
+    </div>
     <common-button :ready="!!newAddress" value="Сохранить" @submit="saveData"></common-button>
     <loading-image v-show="isLoading"></loading-image>
   </form>
@@ -42,7 +45,8 @@ export default {
       newAgreementUrl: null,
       order: null,
       transportations: null,
-      isLoading: false
+      isLoading: false,
+      isConflictHappened: false,
     }
   },
   mounted() {
@@ -62,6 +66,8 @@ export default {
       this.newDate = this.order.date;
       this.newAgreementCode = this.order.agreementCode;
       this.newAgreementUrl = this.order.agreementUrl;
+      this.isLoading = false;
+      this.isConflictHappened = false;
     }
   },
   methods: {
@@ -82,7 +88,9 @@ export default {
         oldOrder: this.order,
         newOrder,
         token: this.$store.state.token
-      }).then(partialEmit, partialEmit)
+      }).then(partialEmit, () => {
+        this.isConflictHappened = true;
+      })
           .finally(() => this.isLoading = false);
     }
   }
@@ -116,5 +124,9 @@ export default {
 
 .link:hover {
   text-decoration: underline;
+}
+
+.conflict-message {
+  color: red;
 }
 </style>

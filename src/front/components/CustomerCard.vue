@@ -3,6 +3,9 @@
     <text-field class="label" label="Имя заказчика" v-model="newName" mandatory></text-field>
     <text-field class="label" label="Адрес (по умолчанию)" v-model="newAddress"></text-field>
     <text-field class="label" label="Номер телефона" v-model="newPhoneNumber"></text-field>
+    <div class="conflict-message" v-show="isConflictHappened">
+      Информация не сохранена. Другой пользователь внёс изменения. Обновите страницу
+    </div>
     <common-button :ready="!!newName" value="Сохранить"
                    @submit="saveData"></common-button>
     <loading-image v-show="isLoading"></loading-image>
@@ -29,14 +32,18 @@ export default {
         newName: this.customer.name,
         newAddress: this.customer.address,
         newPhoneNumber: this.customer.phoneNumber,
-        isLoading: false
+        isLoading: false,
+        isConflictHappened: false,
+        realCustomer: null
       }
     }
     return {
       newName: '',
       newAddress: '',
       newPhoneNumber: '',
-      isLoading: false
+      isLoading: false,
+      isConflictHappened: false,
+      realCustomer: null
     }
   },
   watch: {
@@ -45,6 +52,8 @@ export default {
       this.newAddress = this.customer.address;
       this.newPhoneNumber = this.customer.phoneNumber;
       this.isLoading = false;
+      this.isConflictHappened = false;
+      this.realCustomer = null;
     }
   },
   methods: {
@@ -64,7 +73,11 @@ export default {
           oldCustomer: this.customer,
           newCustomer,
           token: this.$store.state.token
-        }).then(partialEmit, partialEmit).finally(() => this.isLoading = false);
+        }).then(partialEmit, () => {
+          this.isConflictHappened = true;
+        }).finally(() => {
+          this.isLoading = false;
+        });
       } else {
         createCustomer({
           customer: newCustomer,
@@ -86,5 +99,9 @@ export default {
   margin: 10px;
   border: 1px solid #ccc;
   width: 400px;
+}
+
+.conflict-message {
+  color: red;
 }
 </style>

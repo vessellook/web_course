@@ -10,6 +10,9 @@
                   :enableTimePicker="false"></Datepicker>
     </text-field>
     <text-field class="label" label="Количество товаров" v-model="newNumber" mandatory></text-field>
+    <div class="conflict-message" v-show="isConflictHappened">
+      Информация не сохранена. Другой пользователь внёс изменения. Обновите страницу
+    </div>
     <common-button :ready="!!(newStatus && newPlannedDate && newNumber && (newStatus !== 'finished' || newRealDate))" value="Сохранить"
                    @submit="saveData"></common-button>
     <loading-image v-show="isLoading"></loading-image>
@@ -39,14 +42,14 @@ export default {
       newPlannedDate: null,
       newRealDate: null,
       newNumber: null,
-      isLoading: false
+      isLoading: false,
+      isConflictHappened: false,
     };
     if (this.transportation) {
       Object.assign(data, {
         newPlannedDate: this.transportation.plannedDate,
         newRealDate: this.transportation.realDate,
         newNumber: '' + this.transportation.number,
-        isLoading: false,
       });
     }
     return data;
@@ -62,6 +65,7 @@ export default {
       this.newRealDate = this.transportation.realDate;
       this.newNumber = '' + this.transportation.number;
       this.isLoading = false;
+      this.isConflictHappened = false;
     },
   },
   methods: {
@@ -81,7 +85,9 @@ export default {
         oldTransportation: this.transportation,
         newTransportation,
         token: this.$store.state.token
-      }).then(partialEmit, partialEmit)
+      }).then(partialEmit, () => {
+        this.isConflictHappened = true;
+      })
       .finally(() => this.isLoading = false);
 
     }
@@ -117,5 +123,9 @@ export default {
 
 .link:hover {
   text-decoration: underline;
+}
+
+.conflict-message {
+  color: red;
 }
 </style>

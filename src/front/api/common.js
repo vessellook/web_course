@@ -2,9 +2,10 @@ import {tokenHeader} from "@/api/constants";
 
 
 export class BadStatusError extends Error {
-  constructor(status) {
+  constructor(status, data) {
     super('Bad status: ' + status);
     this.status = status;
+    this.data = data;
   }
 }
 
@@ -69,7 +70,10 @@ export function createEntity({url, body, token, cls}) {
   };
   return fetch(url, options)
     .then(parseBody)
-    .then(entity => new cls(entity));
+    .then(entity => new cls(entity), error => {
+      error.data = new cls(error.data);
+      return error;
+    });
 }
 
 /**
@@ -89,15 +93,11 @@ export function updateEntity({url, body, token, cls}) {
     },
     body
   };
-  return fetch(url, options)
-    .then(response => new Promise(async (resolve, reject) => {
-        if (response.ok) {
-          resolve(new cls(await parseBody(response)));
-        } else {
-          reject(new cls(await parseBody(response)));
-        }
-      })
-    );
+  return fetch(url, options).then(parseBody)
+    .then(entity => new cls(entity), error => {
+      error.data = new cls(error.data);
+      throw error;
+    });
 }
 
 /**

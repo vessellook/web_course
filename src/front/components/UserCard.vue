@@ -5,6 +5,9 @@
     <div class="subtitle" v-if="!user.id">Создание нового пользователя</div>
     <text-field class="label" v-if="!user.id" label="Логин" v-model="login" mandatory></text-field>
     <text-field class="label" label="Пароль" type="password" v-model="password" mandatory></text-field>
+    <div class="conflict-message" v-show="isConflictHappened">
+      Информация не сохранена. Другой пользователь внёс изменения. Обновите страницу
+    </div>
     <common-button :ready="!!password" @submit="changePassword" v-if="user.id" value="Сменить пароль"></common-button>
     <common-button :ready="!!(password && login)" @submit="createUser" v-if="!user.id" value="Зарегистрировать пользователя"></common-button>
   </form>
@@ -70,5 +73,9 @@ export default {
 .subtitle {
   font-size: 1.2em;
   margin-bottom: 15px;
+}
+
+.conflict-message {
+  color: red;
 }
 </style>
