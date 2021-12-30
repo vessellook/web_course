@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div class="header">
-      <router-link to="/"><img class="logo" src="/static/img/logo2.png" alt="Логотип" title="logo"></router-link>
+      <router-link to="/"><img class="logo" src="/static/img/logo2.ny.png" alt="Логотип" title="logo"></router-link>
       <div class="nav">
         <router-link :to="{name: 'CustomerList'}" class="nav__link" v-if="isRegistered">Заказчики</router-link>
         <router-link :to="{name: 'OrderList'}" class="nav__link" v-if="isRegistered">Заказы</router-link>
