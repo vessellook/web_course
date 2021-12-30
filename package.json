@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/vessellook/web_course#readme",
   "dependencies": {
+    "@babel/core": "^7.16.5",
     "@vueuse/components": "^7.3.0",
     "@vueuse/core": "^7.3.0",
     "jwt-decode": "^3.1.2",
