@@ -2,23 +2,22 @@
   <div class="transportations">
     <div class="title" v-show="transportationsReal.length > 0">Список поставок</div>
     <common-list :propsArray="propsArray" @clicked="switchToTransportation(transportationsReal[$event])"></common-list>
-    <form class="form" v-show="isNewTransportation">
-      <div class="title">Новая поставка</div>
-      <text-field class="label" label="Запланированная дата поставки" mandatory>
-        <Datepicker v-model="plannedDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                    :enableTimePicker="false"></Datepicker>
-      </text-field>
-      <text-field class="label" label="Фактическая дата поставки">
-        <Datepicker v-model="realDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                    :enableTimePicker="false"></Datepicker>
-      </text-field>
-      <text-field class="label" label="Количество товаров" v-model="number" mandatory></text-field>
-      <text-field class="label" label="Текущее состояние поставки" mandatory>
-        <v-select :options="statuses" v-model="status" :clearable="false"></v-select>
-      </text-field>
-      <common-button :ready="!!(status && plannedDate && number)" value="Добавить поставку"
-                     @submit="saveData"></common-button>
-    </form>
+    <div class="container" v-show="isNewTransportation">
+      <form class="form">
+        <div class="title">Новая поставка</div>
+        <text-field class="label" label="Запланированная дата поставки" mandatory>
+          <Datepicker v-model="plannedDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
+                      :enableTimePicker="false"></Datepicker>
+        </text-field>
+        <text-field class="label" label="Фактическая дата поставки">
+          <Datepicker v-model="realDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
+                      :enableTimePicker="false"></Datepicker>
+        </text-field>
+        <text-field class="label" label="Количество товаров" v-model="number" mandatory></text-field>
+        <common-button :ready="!!(status && plannedDate && number)" value="Добавить поставку"
+                       @submit="saveData"></common-button>
+      </form>
+    </div>
     <common-button value="Добавить поставку" v-show="!isNewTransportation"
                    @submit="createNewTransportation"></common-button>
   </div>
@@ -27,15 +26,14 @@
 <script>
 import CommonList from "@/components/CommonList";
 import CommonButton from "@/components/CommonButton";
-import {createTransportation, getTransportations} from "@/api/transportation";
+import {createTransportation} from "@/api/transportation";
 import TextField from "@/components/TextField";
 import Datepicker from "vue3-date-time-picker";
-import vSelect from "vue-select";
 import Transportation from "@/models/Transportation";
 
 export default {
   name: "TransportationsOfOrder",
-  components: {CommonList, CommonButton, TextField, Datepicker, vSelect},
+  components: {CommonList, CommonButton, TextField, Datepicker},
   props: {
     transportations: {
       required: true
@@ -99,14 +97,18 @@ export default {
 </script>
 
 <style scoped>
+.container {
+  min-height: 600px;
+}
+
 .transportations {
   margin: 10px;
 }
 
 .form {
-  padding: 5px;
+  margin: 5px;
+  padding: 1em 0.5em;
   border: 1px solid #ccc;
-  width: 400px;
 }
 
 .label {

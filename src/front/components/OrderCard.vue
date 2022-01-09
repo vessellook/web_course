@@ -1,23 +1,29 @@
 <template>
-  <form class="form">
-    <div class="title" v-if="order">{{ 'Заказ № ' + order.id }}</div>
-    <text-field class="label" label="Адрес" v-model="newAddress" mandatory></text-field>
-    <text-field class="label" label="Дата заключения договора">
-      <Datepicker v-model="newDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                  :enableTimePicker="false"></Datepicker>
-    </text-field>
-    <text-field class="label" label="Номер договора" v-model="newAgreementCode"></text-field>
-    <text-field class="label" label="Ссылка на договор" v-model="newAgreementUrl"></text-field>
-    <div class="conflict-message" v-show="isConflictHappened">
-      Информация не сохранена. Другой пользователь внёс изменения. Обновите страницу
+  <div class="container">
+    <form class="form">
+      <div class="title" v-if="order">{{ 'Заказ № ' + order.id }}</div>
+      <text-field class="label" label="Адрес" v-model="newAddress" mandatory></text-field>
+      <text-field class="label" label="Дата заключения договора">
+        <Datepicker v-model="newDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
+                    :enableTimePicker="false" :monthChangeOnScroll="false" :format="format"
+                    :previewFormat="format"></Datepicker>
+      </text-field>
+      <text-field class="label" label="Номер договора" v-model="newAgreementCode"></text-field>
+      <text-field class="label" label="Ссылка на договор" v-model="newAgreementUrl"></text-field>
+      <div class="conflict-message" v-show="isConflictHappened">
+        Информация не сохранена. Другой пользователь внёс изменения. Обновите страницу
+      </div>
+      <common-button :ready="!!newAddress" value="Сохранить" @submit="saveData"></common-button>
+      <loading-image v-show="isLoading"></loading-image>
+    </form>
+    <div class="link-wrap">
+      <router-link class="link" v-if="order" :to="{name: 'CustomerList', params: {id: order.customerId}}">Перейти к
+        заказчику
+      </router-link>
     </div>
-    <common-button :ready="!!newAddress" value="Сохранить" @submit="saveData"></common-button>
-    <loading-image v-show="isLoading"></loading-image>
-  </form>
-  <router-link class="link" v-if="order" :to="{name: 'CustomerList', params: {id: order.customerId}}">Перейти к
-    заказчику
-  </router-link>
-  <transportations-of-order v-if="order" :transportations="transportations"></transportations-of-order>
+    <transportations-of-order v-if="order" :transportations="transportations"></transportations-of-order>
+
+  </div>
 </template>
 
 <script>
@@ -71,6 +77,7 @@ export default {
     }
   },
   methods: {
+    format: date => date.toLocaleDateString('ru'),
     saveData() {
       let newOrder = new Order({
         id: this.order.id,
@@ -98,6 +105,10 @@ export default {
 </script>
 
 <style scoped>
+.container {
+  min-height: 700px;
+}
+
 .form {
   padding: 5px;
   margin: 10px;
@@ -114,12 +125,14 @@ export default {
   margin-bottom: 15px;
 }
 
-.link {
-  display: block;
+.link-wrap {
   text-align: right;
+  margin: 10px;
+}
+
+.link {
   color: #28556C;
   text-decoration: none;
-  margin: 10px;
 }
 
 .link:hover {
