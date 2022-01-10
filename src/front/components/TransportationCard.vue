@@ -1,16 +1,12 @@
 <template>
-  <div class="container">
+  <div id="transportation-card" class="container">
     <form class="form">
       <div v-if="transportation" class="title">{{ 'Поставка № ' + transportation.id }}</div>
       <text-field class="label" label="Запланированная дата поставки" mandatory>
-        <Datepicker v-model="newPlannedDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                    :enableTimePicker="false" :monthChangeOnScroll="false" :format="format"
-                    :previewFormat="format"></Datepicker>
+        <DatepickerCustom v-model="newPlannedDate" teleport="#transportation-card"></DatepickerCustom>
       </text-field>
       <text-field class="label" label="Фактическая дата поставки">
-        <Datepicker v-model="newRealDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                    :enableTimePicker="false" :monthChangeOnScroll="false" :format="format"
-                    :previewFormat="format"></Datepicker>
+        <DatepickerCustom v-model="newRealDate" teleport="#transportation-card"></DatepickerCustom>
       </text-field>
       <text-field class="label" label="Количество товаров" v-model="newNumber" mandatory></text-field>
       <div class="conflict-message" v-show="isConflictHappened">
@@ -31,15 +27,15 @@
 import Transportation from "@/models/Transportation";
 import {updateTransportation} from "@/api/transportation";
 import TextField from "@/components/TextField";
-import Datepicker from "vue3-date-time-picker";
 import 'vue3-date-time-picker/dist/main.css';
 import CommonButton from "@/components/CommonButton";
 import vSelect from "vue-select";
 import LoadingImage from "@/components/LoadingImage";
+import DatepickerCustom from "@/components/DatepickerCustom";
 
 export default {
   name: "TransportationCard",
-  components: {TextField, Datepicker, CommonButton, vSelect, LoadingImage},
+  components: {DatepickerCustom, TextField, CommonButton, vSelect, LoadingImage},
   props: {
     transportation: Transportation
   },

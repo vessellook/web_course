@@ -9,8 +9,7 @@
     </text-field>
     <text-field class="label" label="Адрес" v-model="address" mandatory></text-field>
     <text-field class="label" label="Дата заключения договора">
-      <Datepicker v-model="date" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                  :enableTimePicker="false"></Datepicker>
+      <DatepickerCustom v-model="date"></DatepickerCustom>
     </text-field>
     <text-field class="label" label="Номер договора" v-model="agreementCode"></text-field>
     <text-field class="label" label="Ссылка на договор" v-model="agreementUrl"></text-field>
@@ -18,12 +17,10 @@
   <template v-for="(transportation, index) in transportations" :key="index">
     <form class="form">
       <text-field class="label" label="Запланированная дата поставки" mandatory>
-        <Datepicker v-model="transportation.plannedDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                    :enableTimePicker="false"></Datepicker>
+        <DatepickerCustom v-model="transportation.plannedDate"></DatepickerCustom>
       </text-field>
       <text-field class="label" label="Фактическая дата поставки">
-        <Datepicker v-model="transportation.realDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                    :enableTimePicker="false"></Datepicker>
+        <DatepickerCustom v-model="transportation.realDate"></DatepickerCustom>
       </text-field>
       <text-field class="label" label="Количество товаров" v-model="transportation.number" mandatory></text-field>
     </form>
@@ -35,7 +32,6 @@
 </template>
 
 <script>
-import Datepicker from 'vue3-date-time-picker';
 import 'vue3-date-time-picker/dist/main.css'
 import Order from "@/models/Order";
 import TextField from "@/components/TextField";
@@ -48,11 +44,12 @@ import {createOrder} from "@/api/order";
 import Transportation from '@/models/Transportation';
 import {BadStatusError} from "@/api/common";
 import {INVALIDATE_TOKEN} from "@/store/mutations";
+import DatepickerCustom from "@/components/DatepickerCustom";
 
 
 export default {
   name: "CreateOrder",
-  components: {CommonButton, TextField, Datepicker, vSelect},
+  components: {DatepickerCustom, CommonButton, TextField, vSelect},
   props: {
     productId: {default: null},
     customerId: {default: null}

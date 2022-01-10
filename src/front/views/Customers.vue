@@ -1,12 +1,11 @@
 <template>
   <h1 class="title">Заказчики</h1>
-  <common-list :propsArray="propsArray" @clicked="openPopup(customers[$event])"></common-list>
-  <common-button value="Добавить заказчика" @submit="openPopupForNewCustomer"></common-button>
+  <common-list :propsArray="propsArray" @clicked="openPopup(customers[$event])" />
+  <common-button value="Добавить заказчика" @submit="openPopupForNewCustomer" />
   <base-modal v-if="currentCustomer" @close="closePopup">
     <template v-slot>
-      <customer-card :customer="currentCustomer"
-                     @update-customers="updateCustomers().finally(closePopup)"></customer-card>
-      <orders-of-customer v-if="id && id !== 'new'" :customer-id="id"></orders-of-customer>
+      <customer-card :customer="currentCustomer" @update-customers="updateCustomers().finally(closePopup)"/>
+      <orders-of-customer v-if="id && id !== 'new'" :customer-id="id"/>
     </template>
   </base-modal>
 </template>
@@ -70,7 +69,7 @@ export default {
     }
   },
   mounted() {
-    if(this.finishedLoading) {
+    if (this.finishedLoading) {
       this.updateCustomers();
     }
   },
@@ -90,7 +89,7 @@ export default {
       return getCustomers({token: this.$store.state.token})
           .then(customers => this.customers = customers)
           .catch(error => {
-            if(error instanceof BadStatusError && error.status === 401) {
+            if (error instanceof BadStatusError && error.status === 401) {
               this.$store.commit(INVALIDATE_TOKEN);
               this.$router.replace('/');
             }

@@ -1,17 +1,15 @@
 <template>
-  <div class="transportations">
+  <div id="transportations-of-order" class="transportations">
     <div class="title" v-show="transportationsReal.length > 0">Список поставок</div>
     <common-list :propsArray="propsArray" @clicked="switchToTransportation(transportationsReal[$event])"></common-list>
     <div class="container" v-show="isNewTransportation">
       <form class="form">
         <div class="title">Новая поставка</div>
         <text-field class="label" label="Запланированная дата поставки" mandatory>
-          <Datepicker v-model="plannedDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                      :enableTimePicker="false"></Datepicker>
+          <DatepickerCustom v-model="plannedDate" teleport="#transportations-of-order"></DatepickerCustom>
         </text-field>
         <text-field class="label" label="Фактическая дата поставки">
-          <Datepicker v-model="realDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                      :enableTimePicker="false"></Datepicker>
+          <DatepickerCustom v-model="real" teleport="#transportations-of-order"></DatepickerCustom>
         </text-field>
         <text-field class="label" label="Количество товаров" v-model="number" mandatory></text-field>
         <common-button :ready="!!(status && plannedDate && number)" value="Добавить поставку"
@@ -28,12 +26,12 @@ import CommonList from "@/components/CommonList";
 import CommonButton from "@/components/CommonButton";
 import {createTransportation} from "@/api/transportation";
 import TextField from "@/components/TextField";
-import Datepicker from "vue3-date-time-picker";
 import Transportation from "@/models/Transportation";
+import DatepickerCustom from '@/components/DatepickerCustom';
 
 export default {
   name: "TransportationsOfOrder",
-  components: {CommonList, CommonButton, TextField, Datepicker},
+  components: {CommonList, CommonButton, TextField, DatepickerCustom},
   props: {
     transportations: {
       required: true

@@ -27,6 +27,7 @@ let store = createStore({
   mutations: {
     [UPDATE_TOKEN](state, token) {
       let decoded = decode(token);
+      console.log('UPDATE_TOKEN', decoded);
       state.role = decoded.role;
       state.token = token;
       state.expiresAt = new Date(decoded.exp * 1000);

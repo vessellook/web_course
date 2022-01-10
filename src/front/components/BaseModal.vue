@@ -45,7 +45,8 @@ export default {
   min-width: 300px;
   min-height: 200px;
   max-height: calc(100% - 160px);
-  margin: 145px auto auto;
+  margin: 0 auto auto;
+  top: 145px;
   position: relative;
   display: flex;
   justify-content: center;

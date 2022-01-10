@@ -1,12 +1,10 @@
 <template>
-  <div class="container">
+  <div id="order-card" class="container">
     <form class="form">
       <div class="title" v-if="order">{{ 'Заказ № ' + order.id }}</div>
       <text-field class="label" label="Адрес" v-model="newAddress" mandatory></text-field>
       <text-field class="label" label="Дата заключения договора">
-        <Datepicker v-model="newDate" locale="ru" selectText="Выбрать" cancelText="Отмена"
-                    :enableTimePicker="false" :monthChangeOnScroll="false" :format="format"
-                    :previewFormat="format"></Datepicker>
+        <DatepickerCustom v-model="newDate" teleport="#order-card"></DatepickerCustom>
       </text-field>
       <text-field class="label" label="Номер договора" v-model="newAgreementCode"></text-field>
       <text-field class="label" label="Ссылка на договор" v-model="newAgreementUrl"></text-field>
@@ -27,7 +25,6 @@
 </template>
 
 <script>
-import Datepicker from 'vue3-date-time-picker';
 import 'vue3-date-time-picker/dist/main.css'
 import Order from "@/models/Order";
 import TextField from "@/components/TextField";
@@ -35,10 +32,11 @@ import CommonButton from "@/components/CommonButton";
 import {getOrder, getOrderWithTransportations, updateOrder} from "@/api/order";
 import TransportationsOfOrder from "@/components/TransportationsOfOrder";
 import LoadingImage from "@/components/LoadingImage";
+import DatepickerCustom from "@/components/DatepickerCustom";
 
 export default {
   name: "OrderCard",
-  components: {LoadingImage, CommonButton, TextField, Datepicker, TransportationsOfOrder},
+  components: {DatepickerCustom, LoadingImage, CommonButton, TextField, TransportationsOfOrder},
   props: {
     orderId: Number
   },
@@ -107,6 +105,7 @@ export default {
 <style scoped>
 .container {
   min-height: 700px;
+  position: relative;
 }
 
 .form {
