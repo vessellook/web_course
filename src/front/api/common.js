@@ -16,10 +16,21 @@ export class BadStatusError extends Error {
  */
 export async function parseBody(response) {
   if (response.ok) {
-    return (await response.json()).data;
+    let body = (await response.text());
+    let pos = body.indexOf('}{') + 1;
+    if(pos > 0) {
+      body = body.slice(pos);
+    }
+    return JSON.parse(body).data;
   }
-  throw await response.json()
-    .then(json => new BadStatusError(response.status, json.data))
+  throw await response.text()
+    .then(body => {
+      let pos = body.indexOf('}{') + 1;
+      if(pos > 0) {
+        body = body.slice(pos);
+      }
+      return new BadStatusError(response.status, JSON.parse(body).data)
+    })
     .catch(() => new BadStatusError(response.status));
 }
 
